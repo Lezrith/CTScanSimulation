@@ -1,0 +1,56 @@
+﻿<Window x:Class="CTScanSimulation.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CTScanSimulation"
+        mc:Ignorable="d"
+        d:DesignHeight="1024" d:DesignWidth="1024"
+        Title="Symulacja Tomografu" Height="1024" Width="1024" ResizeMode="NoResize">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <StackPanel Margin="10,10,10,0" Orientation="Vertical" VerticalAlignment="Top">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+                <Label x:Name="emiterDetectorSystemStepLabel" Content="Krok układu :" HorizontalAlignment="Left" VerticalAlignment="Top" Width="112" />
+                <Slider x:Name="emiterDetectorSystemStepSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="340" IsSnapToTickEnabled="True" Maximum="90" Minimum="1" TickPlacement="BottomRight" ValueChanged="emiterDetectorSystemStepSlider_ValueChanged" />
+                <TextBox x:Name="emiterDetectorSystemStepTextBox" HorizontalAlignment="Right" Height="22" Margin="0,2,0,0" TextWrapping="Wrap" Width="30" IsReadOnly="True" Text="{Binding ElementName=emiterDetectorSystemStepSlider, Path=Value, UpdateSourceTrigger=PropertyChanged}" IsEnabled="False" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+                <Label x:Name="numberOfDetectorsLabel" Content="Liczba detektorów:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="112" />
+                <Slider x:Name="numberOfDetectorsSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="340" IsSnapToTickEnabled="True" Maximum="15" Minimum="1" TickPlacement="BottomRight" />
+                <TextBox x:Name="numberOfDetectorsTextBox" HorizontalAlignment="Right" Height="22" Margin="0,2,0,0" TextWrapping="Wrap" Width="30" IsReadOnly="True" Text="{Binding ElementName=numberOfDetectorsSlider, Path=Value, UpdateSourceTrigger=PropertyChanged}" IsEnabled="False" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+                <Label x:Name="emiterDetectorSystemWidthLabel" Content="Rozwartość układu:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="112" />
+                <Slider x:Name="emiterDetectorSystemWidthSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="340" IsSnapToTickEnabled="True" Maximum="90" Minimum="10" TickPlacement="BottomRight" />
+                <TextBox x:Name="emiterDetectorSystemWidthTextBox" HorizontalAlignment="Right" Height="22" Margin="0,2,0,0" TextWrapping="Wrap" Width="30" IsReadOnly="True" Text="{Binding ElementName=emiterDetectorSystemWidthSlider, Path=Value, UpdateSourceTrigger=PropertyChanged}" IsEnabled="False" />
+            </StackPanel>
+        </StackPanel>
+        <StackPanel Margin="10,10,10,0" Orientation="Vertical" VerticalAlignment="Top" Grid.Column="1">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+                <TextBox x:Name ="filePathTextBox" Height="22" TextWrapping="Wrap" Text="Wybierz plik" VerticalAlignment="Top" Width="451" BorderBrush="Black" IsEnabled="False" HorizontalContentAlignment="Right" />
+                <Button x:Name="filePickerButton" Click="filePickerButton_Click" Content="..." HorizontalAlignment="Left" VerticalAlignment="Top" Width="30" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+                <Label x:Name="loopStepLabel" Content="Krok pętli:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="112" />
+                <Slider x:Name="loopStepSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="340" IsSnapToTickEnabled="True" Maximum="360" Minimum="1" TickPlacement="BottomRight" />
+                <TextBox x:Name="loopStepTextBox" HorizontalAlignment="Right" Height="22" Margin="0,2,0,0" TextWrapping="Wrap" Width="30" IsReadOnly="True" Text="{Binding ElementName=loopStepSlider, Path=Value, UpdateSourceTrigger=PropertyChanged}" IsEnabled="False" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,5,0,0">
+                <Button x:Name="createSinogramButton" Content="Stwórz sinogram" Margin="0,0,10,0" />
+                <Button x:Name="recreateOrginalImageButton" Content="Odtwórz obraz" Margin="10,0,0,0" />
+            </StackPanel>
+        </StackPanel>
+        <Image x:Name="orginalImage" Margin="0" Grid.Row="1" />
+        <Image x:Name="sinogramImage" Margin="0" Grid.Row="1" Grid.Column="1" />
+        <Image x:Name="recreatedImage" Margin="0" Grid.Row="2" Grid.Column="0" />
+    </Grid>
+</Window>
