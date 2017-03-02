@@ -36,12 +36,12 @@ namespace CTScanSimulation.Model
             radius = radius / 2 - padding;
         }
 
-        public BitmapImage CreateSinogram()
+        public Bitmap CreateSinogram()
         {
             throw new NotImplementedException();
         }
 
-        public BitmapImage RecreateImage()
+        public Bitmap RecreateImage()
         {
             throw new NotImplementedException();
         }

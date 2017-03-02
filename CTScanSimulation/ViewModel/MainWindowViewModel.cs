@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -94,7 +95,7 @@ namespace CTScanSimulation.ViewModel
             {
                 var orginalImage = new Bitmap(orginalImagePath);
                 cTScan = new CTScan(orginalImage, EmiterDetectorSystemStep, NumberOfDetectors, EmiterDetectorSystemWidth);
-                Sinogram = cTScan.CreateSinogram();
+                Sinogram = BitmapToBitmapImage(cTScan.CreateSinogram());
                 CanRecreateImage = true;
             }
             catch (FileNotFoundException ex)
@@ -105,7 +106,7 @@ namespace CTScanSimulation.ViewModel
 
         private void RecreateImage(object obj)
         {
-            this.RecreatedImage = cTScan.RecreateImage();
+            this.RecreatedImage = BitmapToBitmapImage(cTScan.RecreateImage());
         }
 
         private void PickFile(object obj)
@@ -128,6 +129,21 @@ namespace CTScanSimulation.ViewModel
                 // I am saving the file path to a textbox in the UI to display to the user
                 OrginalImagePath = openPicker.FileName.ToString();
                 CanCreateSiogram = true;
+            }
+        }
+
+        private BitmapImage BitmapToBitmapImage(Bitmap bitmap)
+        {
+            using (MemoryStream memory = new MemoryStream())
+            {
+                bitmap.Save(memory, ImageFormat.Png);
+                memory.Position = 0;
+                var bitmapImage = new BitmapImage();
+                bitmapImage.BeginInit();
+                bitmapImage.StreamSource = memory;
+                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapImage.EndInit();
+                return bitmapImage;
             }
         }
     }
