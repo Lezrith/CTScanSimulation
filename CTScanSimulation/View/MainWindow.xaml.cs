@@ -26,11 +26,11 @@ namespace CTScanSimulation
             WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen;
         }
 
-        private void emiterDetectorSystemStepSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private void emitterDetectorSystemStepSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (loopStepSlider != null)
             {
-                loopStepSlider.Maximum = Math.Floor(360 / emiterDetectorSystemStepSlider.Value);
+                loopStepSlider.Maximum = Math.Floor(360 / emitterDetectorSystemStepSlider.Value);
             }
         }
     }

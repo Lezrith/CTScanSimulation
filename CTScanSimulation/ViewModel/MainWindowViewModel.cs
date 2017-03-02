@@ -21,6 +21,7 @@ namespace CTScanSimulation.ViewModel
         private bool canRecreateImage;
         private CTScan cTScan;
         private BitmapImage imageWithCT;
+        private int loopStep;
         private string orginalImagePath;
         private BitmapImage recreatedImage;
         private BitmapImage sinogram;
@@ -30,6 +31,13 @@ namespace CTScanSimulation.ViewModel
             FilePickerButtonCommand = new RelayCommand(PickFile);
             CreateSinogramButtonCommand = new RelayCommand(CreateSinogram);
             RecreateImageButtonCommand = new RelayCommand(RecreateImage);
+            UpdateOrginalImageCommand = new RelayCommand(UpdateOrginalImage);
+
+            EmitterDetectorSystemStep = 1;
+            LoopStep = 1;
+            NumberOfDetectors = 2;
+            EmitterDetectorSystemWidth = 10;
+
             CanCreateSiogram = false;
             CanRecreateImage = false;
         }
@@ -49,10 +57,9 @@ namespace CTScanSimulation.ViewModel
         }
 
         public ICommand CreateSinogramButtonCommand { get; set; }
-        public int EmiterDetectorSystemStep { get; set; }
-        public int EmiterDetectorSystemWidth { get; set; }
+        public int EmitterDetectorSystemStep { get; set; }
+        public int EmitterDetectorSystemWidth { get; set; }
         public ICommand FilePickerButtonCommand { get; set; }
-        public ICommand RecreateImageButtonCommand { get; set; }
 
         public BitmapImage ImageWithCT
         {
@@ -60,6 +67,7 @@ namespace CTScanSimulation.ViewModel
             set { imageWithCT = value; OnPropertyChanged(nameof(ImageWithCT)); }
         }
 
+        public int LoopStep { get; set; }
         public int NumberOfDetectors { get; set; }
 
         public string OrginalImagePath
@@ -74,11 +82,15 @@ namespace CTScanSimulation.ViewModel
             set { recreatedImage = value; OnPropertyChanged(nameof(recreatedImage)); }
         }
 
+        public ICommand RecreateImageButtonCommand { get; set; }
+
         public BitmapImage Sinogram
         {
             get { return sinogram; }
             set { sinogram = value; OnPropertyChanged(nameof(sinogram)); }
         }
+
+        public ICommand UpdateOrginalImageCommand { get; set; }
 
         protected void OnPropertyChanged(string name)
         {
@@ -89,12 +101,26 @@ namespace CTScanSimulation.ViewModel
             }
         }
 
+        private BitmapImage BitmapToBitmapImage(Bitmap bitmap)
+        {
+            using (MemoryStream memory = new MemoryStream())
+            {
+                bitmap.Save(memory, ImageFormat.Png);
+                memory.Position = 0;
+                var bitmapImage = new BitmapImage();
+                bitmapImage.BeginInit();
+                bitmapImage.StreamSource = memory;
+                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapImage.EndInit();
+                bitmap.Dispose();
+                return bitmapImage;
+            }
+        }
+
         private void CreateSinogram(object obj)
         {
             try
             {
-                var orginalImage = new Bitmap(orginalImagePath);
-                cTScan = new CTScan(orginalImage, EmiterDetectorSystemStep, NumberOfDetectors, EmiterDetectorSystemWidth);
                 Sinogram = BitmapToBitmapImage(cTScan.CreateSinogram());
                 CanRecreateImage = true;
             }
@@ -102,11 +128,6 @@ namespace CTScanSimulation.ViewModel
             {
                 MessageBox.Show(ex.Message, "Błąd", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
-        }
-
-        private void RecreateImage(object obj)
-        {
-            this.RecreatedImage = BitmapToBitmapImage(cTScan.RecreateImage());
         }
 
         private void PickFile(object obj)
@@ -129,21 +150,22 @@ namespace CTScanSimulation.ViewModel
                 // I am saving the file path to a textbox in the UI to display to the user
                 OrginalImagePath = openPicker.FileName.ToString();
                 CanCreateSiogram = true;
+                var orginalImage = new Bitmap(orginalImagePath);
+                cTScan = new CTScan(orginalImage, EmitterDetectorSystemStep, NumberOfDetectors, EmitterDetectorSystemWidth);
+                UpdateOrginalImage(null);
             }
         }
 
-        private BitmapImage BitmapToBitmapImage(Bitmap bitmap)
+        private void RecreateImage(object obj)
         {
-            using (MemoryStream memory = new MemoryStream())
+            this.RecreatedImage = BitmapToBitmapImage(cTScan.RecreateImage());
+        }
+
+        private void UpdateOrginalImage(object obj)
+        {
+            if (cTScan != null)
             {
-                bitmap.Save(memory, ImageFormat.Png);
-                memory.Position = 0;
-                var bitmapImage = new BitmapImage();
-                bitmapImage.BeginInit();
-                bitmapImage.StreamSource = memory;
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.EndInit();
-                return bitmapImage;
+                ImageWithCT = BitmapToBitmapImage(cTScan.DrawCTSystem(LoopStep));
             }
         }
     }
