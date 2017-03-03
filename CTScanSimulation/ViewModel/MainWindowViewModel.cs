@@ -33,7 +33,7 @@ namespace CTScanSimulation.ViewModel
             RecreateImageButtonCommand = new RelayCommand(RecreateImage);
             UpdateOrginalImageCommand = new RelayCommand(UpdateOrginalImage);
 
-            EmitterDetectorSystemStep = 1;
+            EmitterDetectorSystemStep = 0.1f;
             LoopStep = 1;
             NumberOfDetectors = 2;
             EmitterDetectorSystemWidth = 10;
@@ -57,7 +57,7 @@ namespace CTScanSimulation.ViewModel
         }
 
         public ICommand CreateSinogramButtonCommand { get; set; }
-        public int EmitterDetectorSystemStep { get; set; }
+        public float EmitterDetectorSystemStep { get; set; }
         public int EmitterDetectorSystemWidth { get; set; }
         public ICommand FilePickerButtonCommand { get; set; }
 
@@ -67,7 +67,12 @@ namespace CTScanSimulation.ViewModel
             set { imageWithCT = value; OnPropertyChanged(nameof(ImageWithCT)); }
         }
 
-        public int LoopStep { get; set; }
+        public int LoopStep
+        {
+            get { return loopStep; }
+            set { loopStep = value; OnPropertyChanged(nameof(LoopStep)); }
+        }
+
         public int NumberOfDetectors { get; set; }
 
         public string OrginalImagePath
@@ -79,7 +84,7 @@ namespace CTScanSimulation.ViewModel
         public BitmapImage RecreatedImage
         {
             get { return recreatedImage; }
-            set { recreatedImage = value; OnPropertyChanged(nameof(recreatedImage)); }
+            set { recreatedImage = value; OnPropertyChanged(nameof(RecreatedImage)); }
         }
 
         public ICommand RecreateImageButtonCommand { get; set; }
@@ -87,7 +92,7 @@ namespace CTScanSimulation.ViewModel
         public BitmapImage Sinogram
         {
             get { return sinogram; }
-            set { sinogram = value; OnPropertyChanged(nameof(sinogram)); }
+            set { sinogram = value; OnPropertyChanged(nameof(Sinogram)); }
         }
 
         public ICommand UpdateOrginalImageCommand { get; set; }
@@ -101,27 +106,11 @@ namespace CTScanSimulation.ViewModel
             }
         }
 
-        private BitmapImage BitmapToBitmapImage(Bitmap bitmap)
-        {
-            using (MemoryStream memory = new MemoryStream())
-            {
-                bitmap.Save(memory, ImageFormat.Png);
-                memory.Position = 0;
-                var bitmapImage = new BitmapImage();
-                bitmapImage.BeginInit();
-                bitmapImage.StreamSource = memory;
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.EndInit();
-                bitmap.Dispose();
-                return bitmapImage;
-            }
-        }
-
         private void CreateSinogram(object obj)
         {
             try
             {
-                Sinogram = BitmapToBitmapImage(cTScan.CreateSinogram());
+                Sinogram = cTScan.CreateSinogram();
                 CanRecreateImage = true;
             }
             catch (FileNotFoundException ex)
@@ -148,6 +137,7 @@ namespace CTScanSimulation.ViewModel
             {
                 // Application now has read/write access to the picked file
                 // I am saving the file path to a textbox in the UI to display to the user
+                LoopStep = 1;
                 OrginalImagePath = openPicker.FileName.ToString();
                 CanCreateSiogram = true;
                 var orginalImage = new Bitmap(orginalImagePath);
@@ -158,14 +148,15 @@ namespace CTScanSimulation.ViewModel
 
         private void RecreateImage(object obj)
         {
-            this.RecreatedImage = BitmapToBitmapImage(cTScan.RecreateImage());
+            this.RecreatedImage = cTScan.RecreateImage();
         }
 
         private void UpdateOrginalImage(object obj)
         {
             if (cTScan != null)
             {
-                ImageWithCT = BitmapToBitmapImage(cTScan.DrawCTSystem(LoopStep));
+                ImageWithCT = cTScan.DrawCTSystem(loopStep - 1);
+                Sinogram = cTScan.CreateSinogram(loopStep - 1);
             }
         }
     }

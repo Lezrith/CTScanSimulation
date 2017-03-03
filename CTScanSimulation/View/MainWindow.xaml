@@ -26,12 +26,12 @@
         <StackPanel Margin="10,10,10,0" Orientation="Vertical" VerticalAlignment="Top">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
                 <Label x:Name="emitterDetectorSystemStepLabel" Content="Krok układu :" HorizontalAlignment="Left" VerticalAlignment="Top" Width="112" />
-                <Slider x:Name="emitterDetectorSystemStepSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="340" IsSnapToTickEnabled="True" Maximum="90" Minimum="1" TickPlacement="BottomRight" ValueChanged="emitterDetectorSystemStepSlider_ValueChanged" Value="{Binding EmitterDetectorSystemStep}" />
+                <Slider x:Name="emitterDetectorSystemStepSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="340" Maximum="22.5" Minimum="0.1" TickPlacement="BottomRight" ValueChanged="emitterDetectorSystemStepSlider_ValueChanged" Value="{Binding EmitterDetectorSystemStep}" />
                 <TextBox x:Name="emitterDetectorSystemStepTextBox" HorizontalAlignment="Right" Height="22" Margin="0,2,0,0" TextWrapping="Wrap" Width="30" IsReadOnly="True" Text="{Binding Value, ElementName=emitterDetectorSystemStepSlider, UpdateSourceTrigger=PropertyChanged}" IsEnabled="False" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
                 <Label x:Name="numberOfDetectorsLabel" Content="Liczba detektorów:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="112" />
-                <Slider x:Name="numberOfDetectorsSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="340" IsSnapToTickEnabled="True" Maximum="15" Minimum="2" TickPlacement="BottomRight" Value="{Binding NumberOfDetectors}" />
+                <Slider x:Name="numberOfDetectorsSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="340" IsSnapToTickEnabled="True" Maximum="900" Minimum="2" TickPlacement="BottomRight" Value="{Binding NumberOfDetectors}" />
                 <TextBox x:Name="numberOfDetectorsTextBox" HorizontalAlignment="Right" Height="22" Margin="0,2,0,0" TextWrapping="Wrap" Width="30" IsReadOnly="True" Text="{Binding Value, ElementName=numberOfDetectorsSlider, UpdateSourceTrigger=PropertyChanged}" IsEnabled="False" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
@@ -47,14 +47,14 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
                 <Label x:Name="loopStepLabel" Content="Krok pętli:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="112" />
-                <Slider x:Name="loopStepSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="340" IsSnapToTickEnabled="True" Maximum="360" Minimum="1" TickPlacement="BottomRight" Value="{Binding LoopStep}">
+                <Slider x:Name="loopStepSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="334" IsSnapToTickEnabled="True" Maximum="3600" Minimum="1" TickPlacement="BottomRight" Value="{Binding LoopStep}">
                     <interactivity:Interaction.Triggers>
                         <interactivity:EventTrigger EventName="ValueChanged">
                             <interactivity:InvokeCommandAction Command="{Binding UpdateOrginalImageCommand}" />
                         </interactivity:EventTrigger>
                     </interactivity:Interaction.Triggers>
                 </Slider>
-                <TextBox x:Name="loopStepTextBox" HorizontalAlignment="Right" Height="22" Margin="0,2,0,0" TextWrapping="Wrap" Width="30" IsReadOnly="True" Text="{Binding Value, ElementName=loopStepSlider, UpdateSourceTrigger=PropertyChanged}" IsEnabled="False" />
+                <TextBox x:Name="loopStepTextBox" HorizontalAlignment="Right" Height="22" Margin="0,2,0,0" TextWrapping="Wrap" Width="41" IsReadOnly="True" Text="{Binding Value, ElementName=loopStepSlider, UpdateSourceTrigger=PropertyChanged}" IsEnabled="False" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,5,0,0">
                 <Button x:Name="createSinogramButton" Content="Stwórz sinogram" Margin="0,0,10,0" Command="{Binding CreateSinogramButtonCommand}" IsEnabled="{Binding CanCreateSiogram}" />
