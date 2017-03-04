@@ -1,12 +1,29 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Windows.Media.Imaging;
 
 namespace CTScanSimulation.Model
 {
+    public struct Pixel
+    {
+        private readonly int x;
+        public int X { get { return x; } }
+
+        private readonly int y;
+        public int Y { get { return y; } }
+
+        public Pixel(int x, int y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
     public class CtScan
     {
         private const int padding = 5;
@@ -29,6 +46,7 @@ namespace CTScanSimulation.Model
             this.emitterDetectorSystemStep = emitterDetectorSystemStep;
             this.numberOfDetectors = numberOfDetectors;
             this.emitterDetectorSystemWidth = emitterDetectorSystemWidth;
+            recreatedImage = new Bitmap(orginalImage.Width, orginalImage.Height);
             detectorStep = (float)emitterDetectorSystemWidth / numberOfDetectors;
             sinogram = new Bitmap((int)Math.Floor(360 / emitterDetectorSystemStep), numberOfDetectors);
 
@@ -136,23 +154,26 @@ namespace CTScanSimulation.Model
             }
         }
 
-        private void CreateSinogramRow(int n)
+        private void CreateSinogramRow(int row)
         {
-            double angle = n * emitterDetectorSystemStep;
+            double angle = row * emitterDetectorSystemStep;
             double radian = angle * 2 * Math.PI / 360;
             int emitterX = (int)(centerX - Math.Sin(radian) * radius);
             int emitterY = (int)(centerY - Math.Cos(radian) * radius);
 
-            for (int i = 0; i < numberOfDetectors; i++)
+            for (int detectorNo = 0; detectorNo < numberOfDetectors; detectorNo++)
             {
-                double detectorAngle = angle + (180 - emitterDetectorSystemWidth / 2) + i * detectorStep;
+                double detectorAngle = angle + (180 - emitterDetectorSystemWidth / 2) + detectorNo * detectorStep;
                 double detectorRad = detectorAngle * 2 * Math.PI / 360;
                 int detectorX = (int)(centerX - Math.Sin(detectorRad) * radius);
                 int detectorY = (int)(centerY - Math.Cos(detectorRad) * radius);
 
-                int sum = SumAlongBresenhamLine(emitterX, emitterY, detectorX, detectorY);
+                IEnumerable<Pixel> pixelsToSum = GetPixelsFromBresenhamLine(emitterX, emitterY, detectorX, detectorY);
+                int sum = pixelsToSum.AsParallel().Aggregate(0, (current, pixel) => current + orginalImage.GetPixel(pixel.X, pixel.Y).R);
+                // Normalization
                 sum /= 2 * radius;
-                if (n < sinogram.Width) sinogram.SetPixel(n, i, Color.FromArgb(sum, sum, sum));
+                if (row < sinogram.Width)
+                    sinogram.SetPixel(row, detectorNo, Color.FromArgb(sum, sum, sum));
             }
         }
 
@@ -171,8 +192,14 @@ namespace CTScanSimulation.Model
                 int detectorY = (int)(centerY - Math.Cos(detectorRad) * radius);
 
                 Color colorToApply = sinogram.GetPixel(row, detector);
-
-                ColorAlongBresenhamLine(emitterX, emitterY, detectorX, detectorY, colorToApply);
+                IEnumerable<Pixel> pixels = GetPixelsFromBresenhamLine(emitterX, emitterY, detectorX, detectorY);
+                foreach (Pixel pixel in pixels)
+                {
+                    Color currentColor = recreatedImage.GetPixel(pixel.X, pixel.Y);
+                    recreatedImage.SetPixel(pixel.X, pixel.Y, Color.FromArgb(currentColor.R + colorToApply.R / (2 * radius),
+                                                                             currentColor.G + colorToApply.G / (2 * radius),
+                                                                             currentColor.B + colorToApply.B / (2 * radius)));
+                }
             }
         }
 
@@ -182,14 +209,13 @@ namespace CTScanSimulation.Model
             return Color.FromArgb(grey, grey, grey);
         }
 
-        private int SumAlongBresenhamLine(int x1, int y1, int x2, int y2)
+        private static IEnumerable<Pixel> GetPixelsFromBresenhamLine(int x1, int y1, int x2, int y2)
         {
-            // zmienne pomocnicze
-
+            // Zmienne pomocnicze
+            List<Pixel> pixels = new List<Pixel>();
             int d, dx, dy, ai, bi, xi, yi;
             int x = x1, y = y1;
-            int result = 0;
-            // ustalenie kierunku rysowania
+            // Ustalenie kierunku rysowania
             if (x1 < x2)
             {
                 xi = 1;
@@ -200,8 +226,7 @@ namespace CTScanSimulation.Model
                 xi = -1;
                 dx = x1 - x2;
             }
-
-            // ustalenie kierunku rysowania
+            // Ustalenie kierunku rysowania
             if (y1 < y2)
             {
                 yi = 1;
@@ -212,19 +237,18 @@ namespace CTScanSimulation.Model
                 yi = -1;
                 dy = y1 - y2;
             }
-            // pierwszy piksel
-            //glVertex2i(x, y)
-            result += orginalImage.GetPixel(x, y).R;
-            // oś wiodąca OX
+            // Pierwszy piksel
+            pixels.Add(new Pixel(x, y));
+            // Oś wiodąca OX
             if (dx > dy)
             {
                 ai = (dy - dx) * 2;
                 bi = dy * 2;
                 d = bi - dx;
-                // pętla po kolejnych x
+                // Pętla po kolejnych X
                 while (x != x2)
                 {
-                    // test współczynnika
+                    // Test współczynnika
                     if (d >= 0)
                     {
                         x += xi;
@@ -236,20 +260,19 @@ namespace CTScanSimulation.Model
                         d += bi;
                         x += xi;
                     }
-                    //glVertex2i(x, y);
-                    result += orginalImage.GetPixel(x, y).R;
+                    pixels.Add(new Pixel(x, y));
                 }
             }
-            // oś wiodąca OY
+            // Oś wiodąca OY
             else
             {
                 ai = (dx - dy) * 2;
                 bi = dx * 2;
                 d = bi - dy;
-                // pętla po kolejnych y
+                //Ppętla po kolejnych Y
                 while (y != y2)
                 {
-                    // test współczynnika
+                    // Test współczynnika
                     if (d >= 0)
                     {
                         x += xi;
@@ -261,96 +284,10 @@ namespace CTScanSimulation.Model
                         d += bi;
                         y += yi;
                     }
-                    //glVertex2i(x, y);
-                    result += orginalImage.GetPixel(x, y).R;
+                    pixels.Add(new Pixel(x, y));
                 }
             }
-            return result;
+            return pixels;
         }
-
-        private void ColorAlongBresenhamLine(int x1, int y1, int x2, int y2, Color colorToApply)
-        {
-            // zmienne pomocnicze
-
-            int d, dx, dy, ai, bi, xi, yi;
-            int x = x1, y = y1;
-            // ustalenie kierunku rysowania
-            if (x1 < x2)
-            {
-                xi = 1;
-                dx = x2 - x1;
-            }
-            else
-            {
-                xi = -1;
-                dx = x1 - x2;
-            }
-
-            // ustalenie kierunku rysowania
-            if (y1 < y2)
-            {
-                yi = 1;
-                dy = y2 - y1;
-            }
-            else
-            {
-                yi = -1;
-                dy = y1 - y2;
-            }
-            // pierwszy piksel
-            //glVertex2i(x, y)
-            recreatedImage.SetPixel(x, y, colorToApply);
-            // oś wiodąca OX
-            if (dx > dy)
-            {
-                ai = (dy - dx) * 2;
-                bi = dy * 2;
-                d = bi - dx;
-                // pętla po kolejnych x
-                while (x != x2)
-                {
-                    // test współczynnika
-                    if (d >= 0)
-                    {
-                        x += xi;
-                        y += yi;
-                        d += ai;
-                    }
-                    else
-                    {
-                        d += bi;
-                        x += xi;
-                    }
-                    //glVertex2i(x, y);
-                    recreatedImage.SetPixel(x, y, colorToApply);
-                }
-            }
-            // oś wiodąca OY
-            else
-            {
-                ai = (dx - dy) * 2;
-                bi = dx * 2;
-                d = bi - dy;
-                // pętla po kolejnych y
-                while (y != y2)
-                {
-                    // test współczynnika
-                    if (d >= 0)
-                    {
-                        x += xi;
-                        y += yi;
-                        d += ai;
-                    }
-                    else
-                    {
-                        d += bi;
-                        y += yi;
-                    }
-                    //glVertex2i(x, y);
-                    recreatedImage.SetPixel(x, y, colorToApply);
-                }
-            }
-        }
-
     }
 }
