@@ -62,7 +62,7 @@
             </StackPanel>
         </StackPanel>
         <Image x:Name="orginalImage" Margin="0" Grid.Row="1" Source="{Binding OrginalImagePath}" />
-        <Image x:Name="orginalImagewithCT" Margin="0" Grid.Row="1" Grid.Column="1" Source="{Binding ImageWithCT}" />
+        <Image x:Name="orginalImagewithCT" Margin="0" Grid.Row="1" Grid.Column="1" Source="{Binding ImageWithCt}" />
         <Image x:Name="sinogramImage" Margin="0" Grid.Row="2" Grid.Column="0" Source="{Binding Sinogram}" />
         <Image x:Name="recreatedImage" Margin="0" Grid.Row="2" Grid.Column="1" Source="{Binding RecreatedImage}" />
     </Grid>

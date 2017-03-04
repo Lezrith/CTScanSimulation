@@ -1,17 +1,12 @@
-﻿using CTScanSimulation.Command;
-using CTScanSimulation.Model;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using CTScanSimulation.Command;
+using CTScanSimulation.Model;
+using Microsoft.Win32;
 
 namespace CTScanSimulation.ViewModel
 {
@@ -19,8 +14,8 @@ namespace CTScanSimulation.ViewModel
     {
         private bool canCreateSinogram;
         private bool canRecreateImage;
-        private CTScan cTScan;
-        private BitmapImage imageWithCT;
+        private CtScan ctScan;
+        private BitmapImage imageWithCt;
         private int loopStep;
         private string orginalImagePath;
         private BitmapImage recreatedImage;
@@ -61,10 +56,10 @@ namespace CTScanSimulation.ViewModel
         public int EmitterDetectorSystemWidth { get; set; }
         public ICommand FilePickerButtonCommand { get; set; }
 
-        public BitmapImage ImageWithCT
+        public BitmapImage ImageWithCt
         {
-            get { return imageWithCT; }
-            set { imageWithCT = value; OnPropertyChanged(nameof(ImageWithCT)); }
+            get { return imageWithCt; }
+            set { imageWithCt = value; OnPropertyChanged(nameof(ImageWithCt)); }
         }
 
         public int LoopStep
@@ -100,17 +95,14 @@ namespace CTScanSimulation.ViewModel
         protected void OnPropertyChanged(string name)
         {
             PropertyChangedEventHandler handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(name));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
         private void CreateSinogram(object obj)
         {
             try
             {
-                Sinogram = cTScan.CreateSinogram();
+                Sinogram = ctScan.CreateSinogram();
                 CanRecreateImage = true;
             }
             catch (FileNotFoundException ex)
@@ -122,7 +114,7 @@ namespace CTScanSimulation.ViewModel
         private void PickFile(object obj)
         {
             // Create the OpenFIleDialog object
-            var openPicker = new Microsoft.Win32.OpenFileDialog
+            var openPicker = new OpenFileDialog
             {
                 // Add file filters
                 DefaultExt = ".png",
@@ -138,26 +130,25 @@ namespace CTScanSimulation.ViewModel
                 // Application now has read/write access to the picked file
                 // I am saving the file path to a textbox in the UI to display to the user
                 LoopStep = 1;
-                OrginalImagePath = openPicker.FileName.ToString();
+                OrginalImagePath = openPicker.FileName;
                 CanCreateSiogram = true;
                 var orginalImage = new Bitmap(orginalImagePath);
-                cTScan = new CTScan(orginalImage, EmitterDetectorSystemStep, NumberOfDetectors, EmitterDetectorSystemWidth);
+                ctScan = new CtScan(orginalImage, EmitterDetectorSystemStep, NumberOfDetectors, EmitterDetectorSystemWidth);
                 UpdateOrginalImage(null);
             }
         }
 
         private void RecreateImage(object obj)
         {
-            this.RecreatedImage = cTScan.RecreateImage();
+            RecreatedImage = ctScan.RecreateImage();
         }
 
         private void UpdateOrginalImage(object obj)
         {
-            if (cTScan != null)
-            {
-                ImageWithCT = cTScan.DrawCTSystem(loopStep - 1);
-                Sinogram = cTScan.CreateSinogram(loopStep - 1);
-            }
+            if (ctScan == null) return;
+            ImageWithCt = ctScan.DrawCtSystem(loopStep - 1);
+            Sinogram = ctScan.CreateSinogram(loopStep - 1);
+            imageWithCt = Sinogram;
         }
     }
 }

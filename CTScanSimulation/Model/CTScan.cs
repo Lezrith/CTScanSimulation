@@ -1,38 +1,35 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
 namespace CTScanSimulation.Model
 {
-    public class CTScan
+    public class CtScan
     {
         private const int padding = 5;
         private const int pointSize = 10; //in pixels
-        private int centerX;
-        private int centerY;
-        private float detectorStep;
-        private float emitterDetectorSystemStep;
-        private int emitterDetectorSystemWidth;
-        private int numberOfDetectors;
-        private Bitmap orginalImage;
-        private int radius;
-        private Bitmap sinogram;
+        private readonly int centerX;
+        private readonly int centerY;
+        private readonly float detectorStep;
+        private readonly float emitterDetectorSystemStep;
+        private readonly int emitterDetectorSystemWidth;
+        private readonly int numberOfDetectors;
+        private readonly Bitmap orginalImage;
+        private readonly int radius;
+        private readonly Bitmap sinogram;
+        private readonly Bitmap recreatedImage;
 
-        public CTScan(Bitmap orginalImage, float emitterDetectorSystemStep, int numberOfDetectors, int emitterDetectorSystemWidth)
+        public CtScan(Bitmap orginalImage, float emitterDetectorSystemStep, int numberOfDetectors, int emitterDetectorSystemWidth)
         {
             ConvertToGreyscale(orginalImage);
             this.orginalImage = orginalImage;
             this.emitterDetectorSystemStep = emitterDetectorSystemStep;
             this.numberOfDetectors = numberOfDetectors;
             this.emitterDetectorSystemWidth = emitterDetectorSystemWidth;
-            detectorStep = (float)emitterDetectorSystemWidth / (float)numberOfDetectors;
-            this.sinogram = new Bitmap((int)Math.Floor(360 / emitterDetectorSystemStep), numberOfDetectors);
+            detectorStep = (float)emitterDetectorSystemWidth / numberOfDetectors;
+            sinogram = new Bitmap((int)Math.Floor(360 / emitterDetectorSystemStep), numberOfDetectors);
 
             centerX = orginalImage.Width / 2;
             centerY = orginalImage.Height / 2;
@@ -41,7 +38,7 @@ namespace CTScanSimulation.Model
             radius = radius / 2 - padding;
         }
 
-        ~CTScan()
+        ~CtScan()
         {
             orginalImage.Dispose();
             sinogram.Dispose();
@@ -63,12 +60,12 @@ namespace CTScanSimulation.Model
             return BitmapToBitmapImage(sinogram);
         }
 
-        public BitmapImage DrawCTSystem(int n)
+        public BitmapImage DrawCtSystem(int n)
         {
             double angle = n * emitterDetectorSystemStep;
             if (angle > 360)
             {
-                throw new ArgumentOutOfRangeException(nameof(n), "angle>360");
+                throw new ArgumentOutOfRangeException(nameof(n), @"angle>360");
             }
             var result = new Bitmap(orginalImage);
             using (Graphics g = Graphics.FromImage(result))
@@ -102,7 +99,12 @@ namespace CTScanSimulation.Model
 
         public BitmapImage RecreateImage()
         {
-            throw new NotImplementedException();
+            for (int row = 0; row < sinogram.Height; row++)
+            {
+                RestoreImageBySinogramRow(row);
+            }
+
+            return BitmapToBitmapImage(recreatedImage);
         }
 
         private BitmapImage BitmapToBitmapImage(Bitmap bitmap)
@@ -120,13 +122,13 @@ namespace CTScanSimulation.Model
             }
         }
 
-        private void ConvertToGreyscale(Bitmap bitmap)
+        private static void ConvertToGreyscale(Bitmap bitmap)
         {
             for (int i = 0; i < bitmap.Height; i++)
             {
                 for (int j = 0; j < bitmap.Width; j++)
                 {
-                    var grey = RGBToGreyscale(bitmap.GetPixel(j, i));
+                    var grey = RgbToGreyscale(bitmap.GetPixel(j, i));
                     bitmap.SetPixel(j, i, grey);
                 }
             }
@@ -136,15 +138,15 @@ namespace CTScanSimulation.Model
         {
             double angle = n * emitterDetectorSystemStep;
             double radian = angle * 2 * Math.PI / 360;
-            int emitterX = (int)(centerX - (Math.Sin(radian) * radius));
-            int emitterY = (int)(centerY - (Math.Cos(radian) * radius));
+            int emitterX = (int)(centerX - Math.Sin(radian) * radius);
+            int emitterY = (int)(centerY - Math.Cos(radian) * radius);
 
             for (int i = 0; i < numberOfDetectors; i++)
             {
-                double detectorAngle = (angle + (180 - emitterDetectorSystemWidth / 2)) + i * detectorStep;
+                double detectorAngle = angle + (180 - emitterDetectorSystemWidth / 2) + i * detectorStep;
                 double detectorRad = detectorAngle * 2 * Math.PI / 360;
-                int detectorX = (int)(centerX - (Math.Sin(detectorRad) * radius));
-                int detectorY = (int)(centerY - (Math.Cos(detectorRad) * radius));
+                int detectorX = (int)(centerX - Math.Sin(detectorRad) * radius);
+                int detectorY = (int)(centerY - Math.Cos(detectorRad) * radius);
 
                 int sum = SumAlongBresenhamLine(emitterX, emitterY, detectorX, detectorY);
                 sum /= 2 * radius;
@@ -152,7 +154,27 @@ namespace CTScanSimulation.Model
             }
         }
 
-        private Color RGBToGreyscale(Color c)
+        private void RestoreImageBySinogramRow(int row)
+        {
+            double angle = row * emitterDetectorSystemStep;
+            double radian = angle * 2 * Math.PI / 360;
+            int emitterX = (int)(centerX - Math.Sin(radian) * radius);
+            int emitterY = (int)(centerY - Math.Cos(radian) * radius);
+
+            for (int detector = 0; detector < numberOfDetectors; detector++)
+            {
+                double detectorAngle = angle + (180 - emitterDetectorSystemWidth / 2) + detector * detectorStep;
+                double detectorRad = detectorAngle * 2 * Math.PI / 360;
+                int detectorX = (int)(centerX - Math.Sin(detectorRad) * radius);
+                int detectorY = (int)(centerY - Math.Cos(detectorRad) * radius);
+
+                Color colorToApply = sinogram.GetPixel(row, detector);
+
+                ColorAlongBresenhamLine(emitterX, emitterY, detectorX, detectorY, colorToApply);
+            }
+        }
+
+        private static Color RgbToGreyscale(Color c)
         {
             int grey = (c.R + c.G + c.B) / 3;
             return Color.FromArgb(grey, grey, grey);
@@ -243,5 +265,90 @@ namespace CTScanSimulation.Model
             }
             return result;
         }
+
+        private void ColorAlongBresenhamLine(int x1, int y1, int x2, int y2, Color colorToApply)
+        {
+            // zmienne pomocnicze
+
+            int d, dx, dy, ai, bi, xi, yi;
+            int x = x1, y = y1;
+            // ustalenie kierunku rysowania
+            if (x1 < x2)
+            {
+                xi = 1;
+                dx = x2 - x1;
+            }
+            else
+            {
+                xi = -1;
+                dx = x1 - x2;
+            }
+
+            // ustalenie kierunku rysowania
+            if (y1 < y2)
+            {
+                yi = 1;
+                dy = y2 - y1;
+            }
+            else
+            {
+                yi = -1;
+                dy = y1 - y2;
+            }
+            // pierwszy piksel
+            //glVertex2i(x, y)
+            recreatedImage.SetPixel(x, y, colorToApply);
+            // oś wiodąca OX
+            if (dx > dy)
+            {
+                ai = (dy - dx) * 2;
+                bi = dy * 2;
+                d = bi - dx;
+                // pętla po kolejnych x
+                while (x != x2)
+                {
+                    // test współczynnika
+                    if (d >= 0)
+                    {
+                        x += xi;
+                        y += yi;
+                        d += ai;
+                    }
+                    else
+                    {
+                        d += bi;
+                        x += xi;
+                    }
+                    //glVertex2i(x, y);
+                    recreatedImage.SetPixel(x, y, colorToApply);
+                }
+            }
+            // oś wiodąca OY
+            else
+            {
+                ai = (dx - dy) * 2;
+                bi = dx * 2;
+                d = bi - dy;
+                // pętla po kolejnych y
+                while (y != y2)
+                {
+                    // test współczynnika
+                    if (d >= 0)
+                    {
+                        x += xi;
+                        y += yi;
+                        d += ai;
+                    }
+                    else
+                    {
+                        d += bi;
+                        y += yi;
+                    }
+                    //glVertex2i(x, y);
+                    recreatedImage.SetPixel(x, y, colorToApply);
+                }
+            }
+        }
+
     }
 }
