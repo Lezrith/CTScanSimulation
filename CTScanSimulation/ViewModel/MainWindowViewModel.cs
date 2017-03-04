@@ -125,17 +125,15 @@ namespace CTScanSimulation.ViewModel
             bool? result = openPicker.ShowDialog();
 
             // Check to see if we have a result
-            if (result == true)
-            {
-                // Application now has read/write access to the picked file
-                // I am saving the file path to a textbox in the UI to display to the user
-                LoopStep = 1;
-                OrginalImagePath = openPicker.FileName;
-                CanCreateSiogram = true;
-                var orginalImage = new Bitmap(orginalImagePath);
-                ctScan = new CtScan(orginalImage, EmitterDetectorSystemStep, NumberOfDetectors, EmitterDetectorSystemWidth);
-                UpdateOrginalImage(null);
-            }
+            if (result != true) return;
+            // Application now has read/write access to the picked file
+            // I am saving the file path to a textbox in the UI to display to the user
+            LoopStep = 1;
+            OrginalImagePath = openPicker.FileName;
+            CanCreateSiogram = true;
+            var orginalImage = new Bitmap(orginalImagePath);
+            ctScan = new CtScan(orginalImage, EmitterDetectorSystemStep, NumberOfDetectors, EmitterDetectorSystemWidth);
+            UpdateOrginalImage(null);
         }
 
         private void RecreateImage(object obj)

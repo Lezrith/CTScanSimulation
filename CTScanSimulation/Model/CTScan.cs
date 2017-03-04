@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -60,6 +61,7 @@ namespace CTScanSimulation.Model
             return BitmapToBitmapImage(sinogram);
         }
 
+        [SuppressMessage("ReSharper", "PossibleLossOfFraction")]
         public BitmapImage DrawCtSystem(int n)
         {
             double angle = n * emitterDetectorSystemStep;
@@ -107,7 +109,7 @@ namespace CTScanSimulation.Model
             return BitmapToBitmapImage(recreatedImage);
         }
 
-        private BitmapImage BitmapToBitmapImage(Bitmap bitmap)
+        private static BitmapImage BitmapToBitmapImage(Image bitmap)
         {
             using (MemoryStream memory = new MemoryStream())
             {

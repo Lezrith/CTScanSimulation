@@ -11,10 +11,7 @@ namespace CTScanSimulation.Command
 
         private event EventHandler CanExecuteChangedInternal;
 
-        public RelayCommand(Action<object> execute)
-            : this(execute, DefaultCanExecute)
-        {
-        }
+        public RelayCommand(Action<object> execute): this(execute, DefaultCanExecute) { }
 
         public RelayCommand(Action<object> execute, Predicate<object> canExecute)
         {

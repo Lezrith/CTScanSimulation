@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:CTScanSimulation"
         xmlns:ViewModel="clr-namespace:CTScanSimulation.ViewModel"
         xmlns:interactivity="http://schemas.microsoft.com/expression/2010/interactivity"
-        x:Class="CTScanSimulation.MainWindow"
+        x:Class="CTScanSimulation.View.MainWindow"
         mc:Ignorable="d"
         d:DesignHeight="1024" d:DesignWidth="1024"
         Title="Symulacja Tomografu" Height="1024" Width="1024" ResizeMode="NoResize">
