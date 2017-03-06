@@ -47,7 +47,7 @@ namespace CTScanSimulation.Model
             this.numberOfDetectors = numberOfDetectors;
             this.emitterDetectorSystemWidth = emitterDetectorSystemWidth;
             recreatedImage = new Bitmap(orginalImage.Width, orginalImage.Height);
-            detectorStep = (float)emitterDetectorSystemWidth / numberOfDetectors;
+            detectorStep = (float)emitterDetectorSystemWidth / (numberOfDetectors - 1);
             sinogram = new Bitmap((int)Math.Floor(360 / emitterDetectorSystemStep), numberOfDetectors);
 
             centerX = orginalImage.Width / 2;
@@ -61,6 +61,7 @@ namespace CTScanSimulation.Model
         {
             orginalImage.Dispose();
             sinogram.Dispose();
+            recreatedImage.Dispose();
         }
 
         public BitmapImage CreateSinogram(int n)
@@ -93,8 +94,8 @@ namespace CTScanSimulation.Model
             using (Pen bluePen = new Pen(Color.CadetBlue, 2))
             {
                 double radian = angle * 2 * Math.PI / 360;
-                float emitterX = centerX - (float)(Math.Sin(radian) * radius);
-                float emitterY = centerY - (float)(Math.Cos(radian) * radius);
+                float emitterX = centerX - (float)(Math.Cos(radian) * radius);
+                float emitterY = centerY - (float)(Math.Sin(radian) * radius);
                 // Draw main frame
                 g.DrawEllipse(redPen, centerX - radius, centerY - radius, 2 * radius, 2 * radius);
                 // Draw center
@@ -106,8 +107,8 @@ namespace CTScanSimulation.Model
                 {
                     double detectorAngle = angle + (180 - emitterDetectorSystemWidth / 2) + i * detectorStep;
                     double detectorRad = detectorAngle * 2 * Math.PI / 360;
-                    float detectorX = centerX - (float)(Math.Sin(detectorRad) * radius);
-                    float detectorY = centerY - (float)(Math.Cos(detectorRad) * radius);
+                    float detectorX = centerX - (float)(Math.Cos(detectorRad) * radius);
+                    float detectorY = centerY - (float)(Math.Sin(detectorRad) * radius);
                     // Draw detector
                     g.FillEllipse(Brushes.Blue, detectorX - pointSize / 2, detectorY - pointSize / 2, pointSize, pointSize);
                     // Draw ray
@@ -165,27 +166,27 @@ namespace CTScanSimulation.Model
                                  long value)                           // Value to convert
         {
             double scale = (double)(newEnd - newStart) / (originalEnd - originalStart);
-            return (long) (newStart + (value - originalStart) * scale);
+            return (long)(newStart + (value - originalStart) * scale);
         }
 
         private void CreateSinogramRow(int row)
         {
             double angle = row * emitterDetectorSystemStep;
             double radian = angle * 2 * Math.PI / 360;
-            int emitterX = (int)(centerX - Math.Sin(radian) * radius);
-            int emitterY = (int)(centerY - Math.Cos(radian) * radius);
+            int emitterX = (int)(centerX - Math.Cos(radian) * radius);
+            int emitterY = (int)(centerY - Math.Sin(radian) * radius);
 
             for (int detectorNo = 0; detectorNo < numberOfDetectors; detectorNo++)
             {
                 double detectorAngle = angle + (180 - emitterDetectorSystemWidth / 2) + detectorNo * detectorStep;
                 double detectorRad = detectorAngle * 2 * Math.PI / 360;
-                int detectorX = (int)(centerX - Math.Sin(detectorRad) * radius);
-                int detectorY = (int)(centerY - Math.Cos(detectorRad) * radius);
+                int detectorX = (int)(centerX - Math.Cos(detectorRad) * radius);
+                int detectorY = (int)(centerY - Math.Sin(detectorRad) * radius);
 
                 IEnumerable<Pixel> pixelsToSum = GetPixelsFromBresenhamLine(emitterX, emitterY, detectorX, detectorY);
                 long sum = pixelsToSum.AsParallel().Aggregate(0, (current, pixel) => current + orginalImage.GetPixel(pixel.X, pixel.Y).R);
                 // Normalization
-                int normalizedSum = (int) (sum / (2 * radius));
+                int normalizedSum = (int)(sum / pixelsToSum.ToList().Count);
                 if (row < sinogram.Width)
                     sinogram.SetPixel(row, detectorNo, Color.FromArgb(normalizedSum, normalizedSum, normalizedSum));
             }
@@ -195,16 +196,16 @@ namespace CTScanSimulation.Model
         {
             double angle = row * emitterDetectorSystemStep;
             double radian = angle * 2 * Math.PI / 360;
-            int emitterX = (int)(centerX - Math.Sin(radian) * radius);
-            int emitterY = (int)(centerY - Math.Cos(radian) * radius);
+            int emitterX = (int)(centerX - Math.Cos(radian) * radius);
+            int emitterY = (int)(centerY - Math.Sin(radian) * radius);
             long[,] tempImage = new long[orginalImage.Width, orginalImage.Height];
 
             for (int detector = 0; detector < numberOfDetectors; detector++)
             {
                 double detectorAngle = angle + (180 - emitterDetectorSystemWidth / 2) + detector * detectorStep;
                 double detectorRad = detectorAngle * 2 * Math.PI / 360;
-                int detectorX = (int) (centerX - Math.Sin(detectorRad) * radius);
-                int detectorY = (int) (centerY - Math.Cos(detectorRad) * radius);
+                int detectorX = (int)(centerX - Math.Cos(detectorRad) * radius);
+                int detectorY = (int)(centerY - Math.Sin(detectorRad) * radius);
 
                 Color colorToApply = sinogram.GetPixel(row, detector);
                 IEnumerable<Pixel> pixels = GetPixelsFromBresenhamLine(emitterX, emitterY, detectorX, detectorY);
@@ -216,7 +217,7 @@ namespace CTScanSimulation.Model
                 }
             }
 
-            long maxValue = tempImage.Cast<long>().Concat(new long[] {0}).Max();
+            long maxValue = tempImage.Cast<long>().Concat(new long[] { 0 }).Max();
 
             // Normalize
             for (int x = 0; x < orginalImage.Width; x++)
@@ -232,7 +233,7 @@ namespace CTScanSimulation.Model
             {
                 for (int y = 0; y < orginalImage.Height; y++)
                 {
-                    int color = (int) tempImage[x, y];
+                    int color = (int)tempImage[x, y];
                     recreatedImage.SetPixel(x, y, Color.FromArgb(color, color, color));
                 }
             }
