@@ -24,6 +24,22 @@ namespace CTScanSimulation.Model
         }
     }
 
+    public struct PixelColor
+    {
+        public byte B;
+        public byte G;
+        public byte R;
+        public byte A;
+
+        public PixelColor(byte r, byte g, byte b, byte a)
+        {
+            this.R = r;
+            this.G = g;
+            this.B = b;
+            this.A = a;
+        }
+    }
+
     public class CtScan
     {
         private const int padding = 5;
@@ -34,10 +50,11 @@ namespace CTScanSimulation.Model
         private readonly float emitterDetectorSystemStep;
         private readonly int emitterDetectorSystemWidth;
         private readonly int numberOfDetectors;
-        private readonly Bitmap orginalImage;
         private readonly int radius;
+        private readonly Bitmap orginalImage;
         private readonly Bitmap sinogram;
-        private readonly Bitmap recreatedImage;
+        private Bitmap recreatedImage;
+        private readonly long[,] rawData;
 
         public CtScan(Bitmap orginalImage, float emitterDetectorSystemStep, int numberOfDetectors, int emitterDetectorSystemWidth)
         {
@@ -48,7 +65,8 @@ namespace CTScanSimulation.Model
             this.emitterDetectorSystemWidth = emitterDetectorSystemWidth;
             recreatedImage = new Bitmap(orginalImage.Width, orginalImage.Height);
             detectorStep = (float)emitterDetectorSystemWidth / (numberOfDetectors - 1);
-            sinogram = new Bitmap((int)Math.Floor(360 / emitterDetectorSystemStep), numberOfDetectors);
+            sinogram = new Bitmap(numberOfDetectors, (int)Math.Floor(360 / emitterDetectorSystemStep));
+            rawData = new long[orginalImage.Width, orginalImage.Height];
 
             centerX = orginalImage.Width / 2;
             centerY = orginalImage.Height / 2;
@@ -184,12 +202,49 @@ namespace CTScanSimulation.Model
                 int detectorY = (int)(centerY - Math.Sin(detectorRad) * radius);
 
                 IEnumerable<Pixel> pixelsToSum = GetPixelsFromBresenhamLine(emitterX, emitterY, detectorX, detectorY);
-                long sum = pixelsToSum.AsParallel().Aggregate(0, (current, pixel) => current + orginalImage.GetPixel(pixel.X, pixel.Y).R);
+                var toSum = pixelsToSum as IList<Pixel> ?? pixelsToSum.ToList();
+                long sum = toSum.AsParallel().Aggregate(0, (current, pixel) => current + orginalImage.GetPixel(pixel.X, pixel.Y).R);
                 // Normalization
-                int normalizedSum = (int)(sum / pixelsToSum.ToList().Count);
-                if (row < sinogram.Width)
-                    sinogram.SetPixel(row, detectorNo, Color.FromArgb(normalizedSum, normalizedSum, normalizedSum));
+                int normalizedSum = (int)(sum / toSum.ToList().Count);
+                if (row < sinogram.Height)
+                    sinogram.SetPixel(detectorNo, row, Color.FromArgb(normalizedSum, normalizedSum, normalizedSum));
             }
+        }
+
+        private void CreateBitmapFromRawData()
+        {
+
+            // Create new bitmap
+            recreatedImage.Dispose();
+            recreatedImage = new Bitmap(orginalImage.Width, orginalImage.Height);
+
+            // Find the maximum value in the array
+            long maxValue = rawData.Cast<long>().Concat(new long[] { 0 }).Max();
+
+            BitmapData locked = recreatedImage.LockBits(new Rectangle(0, 0, recreatedImage.Width, recreatedImage.Height),
+                                                        ImageLockMode.ReadWrite,
+                                                        PixelFormat.Format32bppArgb);
+            unsafe
+            {
+                PixelColor* pixelPtr = (PixelColor*) (void*) locked.Scan0;
+
+                // Normalize
+                for (int x = 0; x < orginalImage.Width; x++)
+                {
+                    for (int y = 0; y < orginalImage.Height; y++)
+                    {
+                        byte color = (byte) Scale(0, maxValue, 0, 255, rawData[x, y]);
+                        if (color != 0)
+                        {
+                            Console.WriteLine(color + @"at " + x + @"," + y);
+                        }
+                        *pixelPtr = new PixelColor(color, color, color, 255);
+                        pixelPtr++;
+                    }
+                }
+            }
+
+            recreatedImage.UnlockBits(locked);
         }
 
         private void RestoreImageBySinogramRow(int row)
@@ -198,7 +253,6 @@ namespace CTScanSimulation.Model
             double radian = angle * 2 * Math.PI / 360;
             int emitterX = (int)(centerX - Math.Cos(radian) * radius);
             int emitterY = (int)(centerY - Math.Sin(radian) * radius);
-            long[,] tempImage = new long[orginalImage.Width, orginalImage.Height];
 
             for (int detector = 0; detector < numberOfDetectors; detector++)
             {
@@ -207,36 +261,21 @@ namespace CTScanSimulation.Model
                 int detectorX = (int)(centerX - Math.Cos(detectorRad) * radius);
                 int detectorY = (int)(centerY - Math.Sin(detectorRad) * radius);
 
-                Color colorToApply = sinogram.GetPixel(row, detector);
+                Color colorToApply = sinogram.GetPixel(detector, row);
+                if (colorToApply.R != 0)
+                {
+                    Console.WriteLine("Color " + colorToApply.R + " at row " + row + " detector " + detector);
+                }
                 IEnumerable<Pixel> pixels = GetPixelsFromBresenhamLine(emitterX, emitterY, detectorX, detectorY);
 
                 // Add colors
                 foreach (Pixel pixel in pixels)
                 {
-                    tempImage[pixel.X, pixel.Y] += colorToApply.R;
+                    rawData[pixel.X, pixel.Y] += colorToApply.R;
                 }
             }
 
-            long maxValue = tempImage.Cast<long>().Concat(new long[] { 0 }).Max();
-
-            // Normalize
-            for (int x = 0; x < orginalImage.Width; x++)
-            {
-                for (int y = 0; y < orginalImage.Height; y++)
-                {
-                    tempImage[x, y] = Scale(0, maxValue, 0, 255, tempImage[x, y]);
-                }
-            }
-
-            // Fill the image with normalized array of colors
-            for (int x = 0; x < orginalImage.Width; x++)
-            {
-                for (int y = 0; y < orginalImage.Height; y++)
-                {
-                    int color = (int)tempImage[x, y];
-                    recreatedImage.SetPixel(x, y, Color.FromArgb(color, color, color));
-                }
-            }
+            CreateBitmapFromRawData();
         }
 
         private static IEnumerable<Pixel> GetPixelsFromBresenhamLine(int x1, int y1, int x2, int y2)
