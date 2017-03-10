@@ -51,7 +51,7 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
                 <Label x:Name="sinogramLoopStepLabel" Content="Krok siogramu.:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="112" />
-                <Slider x:Name="sinogramLoopStepSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="334" IsSnapToTickEnabled="True" Maximum="3600" Minimum="1" TickPlacement="BottomRight" Value="{Binding SinogramLoopStep}">
+                <Slider x:Name="sinogramLoopStepSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="334" IsSnapToTickEnabled="True" Maximum="3600" Minimum="0" TickPlacement="BottomRight" Value="{Binding SinogramLoopStep}">
                     <interactivity:Interaction.Triggers>
                         <interactivity:EventTrigger EventName="ValueChanged">
                             <interactivity:InvokeCommandAction Command="{Binding UpdateOrginalImageCommand}" />
@@ -62,7 +62,7 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
                 <Label x:Name="recreationLoopStepLabel" Content="Krok odtwarzania:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="112" />
-                <Slider x:Name="recreationLoopStepSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="334" IsSnapToTickEnabled="True" Maximum="3600" Minimum="1" TickPlacement="BottomRight" Value="{Binding RecreationLoopStep}">
+                <Slider x:Name="recreationLoopStepSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="334" IsSnapToTickEnabled="True" Maximum="3600" Minimum="0" TickPlacement="BottomRight" Value="{Binding RecreationLoopStep}">
                     <interactivity:Interaction.Triggers>
                         <interactivity:EventTrigger EventName="ValueChanged">
                             <interactivity:InvokeCommandAction Command="{Binding UpdateRecreatedImageCommand}" />

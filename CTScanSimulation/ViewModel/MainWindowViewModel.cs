@@ -31,7 +31,8 @@ namespace CTScanSimulation.ViewModel
             UpdateRecreatedImageCommand = new RelayCommand(UpdateRecreatedImage);
 
             EmitterDetectorSystemStep = 0.1f;
-            SinogramLoopStep = 1;
+            SinogramLoopStep = 0;
+            RecreationLoopStep = 0;
             NumberOfDetectors = 2;
             EmitterDetectorSystemWidth = 10;
 
@@ -139,7 +140,8 @@ namespace CTScanSimulation.ViewModel
             if (result != true) return;
             // Application now has read/write access to the picked file
             // I am saving the file path to a textbox in the UI to display to the user
-            SinogramLoopStep = 1;
+            SinogramLoopStep = 0;
+            RecreationLoopStep = 0;
             OrginalImagePath = openPicker.FileName;
             CanCreateSiogram = true;
             var orginalImage = new Bitmap(orginalImagePath);
@@ -154,7 +156,7 @@ namespace CTScanSimulation.ViewModel
 
         private void UpdateOrginalImage(object obj)
         {
-            if (ctScan == null) return;
+            if (ctScan == null || sinogramLoopStep < 1) return;
             ImageWithCt = ctScan.DrawCtSystem(sinogramLoopStep - 1);
             Sinogram = ctScan.CreateSinogram(sinogramLoopStep - 1);
             imageWithCt = Sinogram;
@@ -162,7 +164,7 @@ namespace CTScanSimulation.ViewModel
 
         private void UpdateRecreatedImage(object obj)
         {
-            if (ctScan == null) return;
+            if (ctScan == null || recreationLoopStep < 1) return;
             RecreatedImage = ctScan.RecreateImage(recreationLoopStep - 1);
         }
     }

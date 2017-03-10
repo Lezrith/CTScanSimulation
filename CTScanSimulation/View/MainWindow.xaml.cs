@@ -18,8 +18,9 @@ namespace CTScanSimulation.View
         {
             if (sinogramLoopStepSlider != null)
             {
-                sinogramLoopStepSlider.Maximum = Math.Floor(360 / emitterDetectorSystemStepSlider.Value);
-                recreationLoopStepSlider.Maximum = Math.Floor(360 / emitterDetectorSystemStepSlider.Value);
+                double maximum = Math.Floor(360 / emitterDetectorSystemStepSlider.Value);
+                sinogramLoopStepSlider.Maximum = maximum;
+                recreationLoopStepSlider.Maximum = maximum;
             }
         }
     }
