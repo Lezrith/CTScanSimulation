@@ -37,6 +37,7 @@ namespace CTScanSimulation.Model
         private readonly long[,] rawData;
         private readonly DirectBitmap sinogram;
         private DirectBitmap recreatedImage;
+        private readonly long firstPixelsToSkip;
 
         public CtScan(Bitmap orginalImage, float emitterDetectorSystemStep, int numberOfDetectors, int emitterDetectorSystemWidth)
         {
@@ -55,6 +56,8 @@ namespace CTScanSimulation.Model
 
             radius = orginalImage.Height > orginalImage.Width ? orginalImage.Width : orginalImage.Height;
             radius = radius / 2 - padding;
+            firstPixelsToSkip = (long) (2.5 * orginalImage.Width / emitterDetectorSystemWidth);
+
         }
 
         ~CtScan()
@@ -300,15 +303,17 @@ namespace CTScanSimulation.Model
                 int detectorY = (int)(centerY - Math.Sin(detectorRad) * radius);
 
                 Color colorToApply = sinogram.GetPixel(detector, row);
-                if (colorToApply.R != 0)
-                {
-                    Console.WriteLine("Color " + colorToApply.R + " at row " + row + " detector " + detector);
-                }
                 IEnumerable<Pixel> pixels = GetPixelsFromBresenhamLine(emitterX, emitterY, detectorX, detectorY);
 
+                long skippedPixels = 0;
                 // Add colors
                 foreach (Pixel pixel in pixels)
                 {
+                    if (skippedPixels < firstPixelsToSkip)
+                    {
+                        ++skippedPixels;
+                        continue;
+                    }
                     rawData[pixel.X, pixel.Y] += colorToApply.R;
                 }
             }
