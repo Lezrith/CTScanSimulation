@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -34,33 +35,6 @@ namespace CTScanSimulation.Model
             Bitmap = new Bitmap(width, height, width * NUMBER_OF_CHANNELS, PixelFormat.Format32bppPArgb, BitsHandle.AddrOfPinnedObject());
         }
 
-        /// <summary>
-        /// Creates new instance of <c>DirectBitmap</c> with provided <c>Bitmap</c>.
-        /// Do not call <c>Dispose()</c> on <c>Bitmap</c> you provided as parameter.
-        /// </summary>
-        /// <param name="bitmap"></param>
-        public DirectBitmap(Bitmap bitmap)
-        {
-            Width = bitmap.Width;
-            Height = bitmap.Height;
-            Bits = new Int32[Width * Height];
-            BitsHandle = GCHandle.Alloc(Bits, GCHandleType.Pinned);
-            Bitmap = bitmap;
-        }
-
-        /// <summary>
-        /// Creates new instance of <c>DirectBitmap</c> from file.
-        /// </summary>
-        /// <param name="filename">Path to file.</param>
-        public DirectBitmap(string filename)
-        {
-            Bitmap = (Bitmap)Image.FromFile(filename);
-            Width = Bitmap.Width;
-            Height = Bitmap.Height;
-            Bits = new Int32[Width * Height];
-            BitsHandle = GCHandle.Alloc(Bits, GCHandleType.Pinned);
-        }
-
         public bool Disposed { get; private set; }
         public int Height { get; private set; }
         public int Width { get; private set; }
@@ -78,7 +52,7 @@ namespace CTScanSimulation.Model
         }
 
         /// <summary>
-        ///
+        /// Gets <c>Color</c> of the specified pixel.
         /// </summary>
         /// <param name="x">Horizontal location.</param>
         /// <param name="y">Vertical location.</param>
@@ -99,7 +73,7 @@ namespace CTScanSimulation.Model
         }
 
         /// <summary>
-        ///
+        /// Sets <c>Color</c> of the specified pixel.
         /// </summary>
         /// <param name="x">Horizontal location.</param>
         /// <param name="y">Vertical location.</param>
@@ -116,7 +90,36 @@ namespace CTScanSimulation.Model
         /// <returns></returns>
         public BitmapImage ToBitmapImage()
         {
-            return CtScan.BitmapToBitmapImage(Bitmap);
+            return BitmapToBitmapImage(Bitmap);
+        }
+
+        /// <summary>
+        /// Creates new <c>Graphics</c> for underlying <c>Bitmap</c>.
+        /// </summary>
+        /// <returns><c>Graphics</c> for underlying <c>Bitmap</c>.</returns>
+        public Graphics GetGraphics()
+        {
+            return Graphics.FromImage(Bitmap);
+        }
+
+        /// <summary>
+        /// Converts provided <c>Bitmap</c> to <c>BitmapImage</c>
+        /// </summary>
+        /// <param name="bitmap"><c>Bitmap</c> to convert.</param>
+        /// <returns><c>BitmapImage</c> created from provided bitmap.</returns>
+        public static BitmapImage BitmapToBitmapImage(Image bitmap)
+        {
+            using (MemoryStream memory = new MemoryStream())
+            {
+                bitmap.Save(memory, ImageFormat.Png);
+                memory.Position = 0;
+                var bitmapImage = new BitmapImage();
+                bitmapImage.BeginInit();
+                bitmapImage.StreamSource = memory;
+                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapImage.EndInit();
+                return bitmapImage;
+            }
         }
     }
 }
