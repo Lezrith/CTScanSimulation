@@ -39,6 +39,10 @@
                 <Slider x:Name="emitterDetectorSystemWidthSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="340" IsSnapToTickEnabled="True" Maximum="90" Minimum="10" TickPlacement="BottomRight" Value="{Binding EmitterDetectorSystemWidth}" />
                 <TextBox x:Name="emitterDetectorSystemWidthTextBox" HorizontalAlignment="Right" Height="22" Margin="0,2,0,0" TextWrapping="Wrap" Width="30" IsReadOnly="True" Text="{Binding Value, ElementName=emitterDetectorSystemWidthSlider, UpdateSourceTrigger=PropertyChanged}" IsEnabled="False" />
             </StackPanel>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+                <Label x:Name="filteringLabel" Content="Filtrowanie:" HorizontalAlignment="Left" />
+                <CheckBox x:Name="filteringCheckBox" HorizontalAlignment="Left" IsChecked="{Binding Filtering}" Margin="0,8,0,0" />
+            </StackPanel>
         </StackPanel>
         <StackPanel Margin="10,10,10,0" Orientation="Vertical" VerticalAlignment="Top" Grid.Column="1">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
@@ -46,15 +50,26 @@
                 <Button x:Name="filePickerButton" Content="..." HorizontalAlignment="Left" VerticalAlignment="Top" Width="30" Command="{Binding FilePickerButtonCommand}" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
-                <Label x:Name="loopStepLabel" Content="Krok pętli:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="112" />
-                <Slider x:Name="loopStepSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="334" IsSnapToTickEnabled="True" Maximum="3600" Minimum="1" TickPlacement="BottomRight" Value="{Binding LoopStep}">
+                <Label x:Name="sinogramLoopStepLabel" Content="Krok siogramu.:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="112" />
+                <Slider x:Name="sinogramLoopStepSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="334" IsSnapToTickEnabled="True" Maximum="3600" Minimum="1" TickPlacement="BottomRight" Value="{Binding SinogramLoopStep}">
                     <interactivity:Interaction.Triggers>
                         <interactivity:EventTrigger EventName="ValueChanged">
                             <interactivity:InvokeCommandAction Command="{Binding UpdateOrginalImageCommand}" />
                         </interactivity:EventTrigger>
                     </interactivity:Interaction.Triggers>
                 </Slider>
-                <TextBox x:Name="loopStepTextBox" HorizontalAlignment="Right" Height="22" Margin="0,2,0,0" TextWrapping="Wrap" Width="41" IsReadOnly="True" Text="{Binding Value, ElementName=loopStepSlider, UpdateSourceTrigger=PropertyChanged}" IsEnabled="False" />
+                <TextBox x:Name="sinogramLoopStepTextBox" HorizontalAlignment="Right" Height="22" Margin="0,2,0,0" TextWrapping="Wrap" Width="41" IsReadOnly="True" Text="{Binding Value, ElementName=sinogramLoopStepSlider, UpdateSourceTrigger=PropertyChanged}" IsEnabled="False" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+                <Label x:Name="recreationLoopStepLabel" Content="Krok odtwarzania:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="112" />
+                <Slider x:Name="recreationLoopStepSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="334" IsSnapToTickEnabled="True" Maximum="3600" Minimum="1" TickPlacement="BottomRight" Value="{Binding RecreationLoopStep}">
+                    <interactivity:Interaction.Triggers>
+                        <interactivity:EventTrigger EventName="ValueChanged">
+                            <interactivity:InvokeCommandAction Command="{Binding UpdateRecreatedImageCommand}" />
+                        </interactivity:EventTrigger>
+                    </interactivity:Interaction.Triggers>
+                </Slider>
+                <TextBox x:Name="recreationLoopStepTextBox" HorizontalAlignment="Right" Height="22" Margin="0,2,0,0" TextWrapping="Wrap" Width="41" IsReadOnly="True" Text="{Binding Value, ElementName=recreationLoopStepSlider, UpdateSourceTrigger=PropertyChanged}" IsEnabled="False" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,5,0,0">
                 <Button x:Name="createSinogramButton" Content="Stwórz sinogram" Margin="0,0,10,0" Command="{Binding CreateSinogramButtonCommand}" IsEnabled="{Binding CanCreateSiogram}" />

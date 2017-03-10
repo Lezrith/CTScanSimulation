@@ -1,12 +1,12 @@
-﻿using System.ComponentModel;
+﻿using CTScanSimulation.Command;
+using CTScanSimulation.Model;
+using Microsoft.Win32;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
-using CTScanSimulation.Command;
-using CTScanSimulation.Model;
-using Microsoft.Win32;
 
 namespace CTScanSimulation.ViewModel
 {
@@ -16,10 +16,11 @@ namespace CTScanSimulation.ViewModel
         private bool canRecreateImage;
         private CtScan ctScan;
         private BitmapImage imageWithCt;
-        private int loopStep;
         private string orginalImagePath;
         private BitmapImage recreatedImage;
+        private int recreationLoopStep;
         private BitmapImage sinogram;
+        private int sinogramLoopStep;
 
         public MainWindowViewModel()
         {
@@ -27,9 +28,10 @@ namespace CTScanSimulation.ViewModel
             CreateSinogramButtonCommand = new RelayCommand(CreateSinogram);
             RecreateImageButtonCommand = new RelayCommand(RecreateImage);
             UpdateOrginalImageCommand = new RelayCommand(UpdateOrginalImage);
+            UpdateRecreatedImageCommand = new RelayCommand(UpdateRecreatedImage);
 
             EmitterDetectorSystemStep = 0.1f;
-            LoopStep = 1;
+            SinogramLoopStep = 1;
             NumberOfDetectors = 2;
             EmitterDetectorSystemWidth = 10;
 
@@ -55,17 +57,12 @@ namespace CTScanSimulation.ViewModel
         public float EmitterDetectorSystemStep { get; set; }
         public int EmitterDetectorSystemWidth { get; set; }
         public ICommand FilePickerButtonCommand { get; set; }
+        public bool Filtering { get; set; }
 
         public BitmapImage ImageWithCt
         {
             get { return imageWithCt; }
             set { imageWithCt = value; OnPropertyChanged(nameof(ImageWithCt)); }
-        }
-
-        public int LoopStep
-        {
-            get { return loopStep; }
-            set { loopStep = value; OnPropertyChanged(nameof(LoopStep)); }
         }
 
         public int NumberOfDetectors { get; set; }
@@ -84,13 +81,27 @@ namespace CTScanSimulation.ViewModel
 
         public ICommand RecreateImageButtonCommand { get; set; }
 
+        public int RecreationLoopStep
+        {
+            get { return recreationLoopStep; }
+            set { recreationLoopStep = value; OnPropertyChanged(nameof(RecreationLoopStep)); }
+        }
+
         public BitmapImage Sinogram
         {
             get { return sinogram; }
             set { sinogram = value; OnPropertyChanged(nameof(Sinogram)); }
         }
 
+        public int SinogramLoopStep
+        {
+            get { return sinogramLoopStep; }
+            set { sinogramLoopStep = value; OnPropertyChanged(nameof(SinogramLoopStep)); }
+        }
+
         public ICommand UpdateOrginalImageCommand { get; set; }
+
+        public ICommand UpdateRecreatedImageCommand { get; set; }
 
         protected void OnPropertyChanged(string name)
         {
@@ -128,7 +139,7 @@ namespace CTScanSimulation.ViewModel
             if (result != true) return;
             // Application now has read/write access to the picked file
             // I am saving the file path to a textbox in the UI to display to the user
-            LoopStep = 1;
+            SinogramLoopStep = 1;
             OrginalImagePath = openPicker.FileName;
             CanCreateSiogram = true;
             var orginalImage = new Bitmap(orginalImagePath);
@@ -144,9 +155,15 @@ namespace CTScanSimulation.ViewModel
         private void UpdateOrginalImage(object obj)
         {
             if (ctScan == null) return;
-            ImageWithCt = ctScan.DrawCtSystem(loopStep - 1);
-            Sinogram = ctScan.CreateSinogram(loopStep - 1);
+            ImageWithCt = ctScan.DrawCtSystem(sinogramLoopStep - 1);
+            Sinogram = ctScan.CreateSinogram(sinogramLoopStep - 1);
             imageWithCt = Sinogram;
+        }
+
+        private void UpdateRecreatedImage(object obj)
+        {
+            if (ctScan == null) return;
+            RecreatedImage = ctScan.RecreateImage(recreationLoopStep - 1);
         }
     }
 }

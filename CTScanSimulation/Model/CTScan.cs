@@ -146,6 +146,12 @@ namespace CTScanSimulation.Model
             return BitmapToBitmapImage(recreatedImage);
         }
 
+        public BitmapImage RecreateImage(int n)
+        {
+            RestoreImageBySinogramRow(n);
+            return BitmapToBitmapImage(recreatedImage);
+        }
+
         private static BitmapImage BitmapToBitmapImage(Image bitmap)
         {
             using (MemoryStream memory = new MemoryStream())
@@ -213,7 +219,6 @@ namespace CTScanSimulation.Model
 
         private void CreateBitmapFromRawData()
         {
-
             // Create new bitmap
             recreatedImage.Dispose();
             recreatedImage = new Bitmap(orginalImage.Width, orginalImage.Height);
@@ -226,14 +231,14 @@ namespace CTScanSimulation.Model
                                                         PixelFormat.Format32bppArgb);
             unsafe
             {
-                PixelColor* pixelPtr = (PixelColor*) (void*) locked.Scan0;
+                PixelColor* pixelPtr = (PixelColor*)(void*)locked.Scan0;
 
                 // Normalize
                 for (int x = 0; x < orginalImage.Width; x++)
                 {
                     for (int y = 0; y < orginalImage.Height; y++)
                     {
-                        byte color = (byte) Scale(0, maxValue, 0, 255, rawData[x, y]);
+                        byte color = (byte)Scale(0, maxValue, 0, 255, rawData[x, y]);
                         if (color != 0)
                         {
                             Console.WriteLine(color + @"at " + x + @"," + y);

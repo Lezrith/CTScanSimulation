@@ -16,9 +16,10 @@ namespace CTScanSimulation.View
 
         private void emitterDetectorSystemStepSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            if (loopStepSlider != null)
+            if (sinogramLoopStepSlider != null)
             {
-                loopStepSlider.Maximum = Math.Floor(360 / emitterDetectorSystemStepSlider.Value);
+                sinogramLoopStepSlider.Maximum = Math.Floor(360 / emitterDetectorSystemStepSlider.Value);
+                recreationLoopStepSlider.Maximum = Math.Floor(360 / emitterDetectorSystemStepSlider.Value);
             }
         }
     }
