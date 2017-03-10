@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
 namespace CTScanSimulation.Model
@@ -30,14 +26,37 @@ namespace CTScanSimulation.Model
         {
             Width = width;
             Height = height;
-            Bits = new Int32[width * height];
+            Bits = new int[width * height];
             BitsHandle = GCHandle.Alloc(Bits, GCHandleType.Pinned);
             Bitmap = new Bitmap(width, height, width * NUMBER_OF_CHANNELS, PixelFormat.Format32bppPArgb, BitsHandle.AddrOfPinnedObject());
         }
 
+        public DirectBitmap(Bitmap bitmap, bool dispose = false)
+        {
+            const PixelFormat pixelFormat = PixelFormat.Format32bppPArgb;
+
+            int bitsPerPixel = Image.GetPixelFormatSize(pixelFormat);
+            int bytesPerPixel = bitsPerPixel / 8;
+            if (bytesPerPixel > 0) {
+                Width = bitmap.Width;
+                Height = bitmap.Height;
+                Bits = new int[Width * Height];
+                BitsHandle = GCHandle.Alloc(Bits, GCHandleType.Pinned);
+                Bitmap = new Bitmap(Width, Height, Width * bytesPerPixel, pixelFormat, BitsHandle.AddrOfPinnedObject());
+                var bitmapData = bitmap.LockBits(new Rectangle(0, 0, Width, Height), ImageLockMode.ReadOnly, pixelFormat);
+                NativeMethods.CopyMemory(BitsHandle.AddrOfPinnedObject(), bitmapData.Scan0, Width * Height * bytesPerPixel);
+                bitmap.UnlockBits(bitmapData);
+                if (dispose)
+                {
+                    bitmap.Dispose();
+                }
+            }
+            else throw new ArgumentException(@"The source PixelFormat is not supported.", nameof(bitmap));
+        }
+
         public bool Disposed { get; private set; }
-        public int Height { get; private set; }
-        public int Width { get; private set; }
+        public int Height { get; }
+        public int Width { get; }
 
         /// <summary>
         /// Release resources.
@@ -122,4 +141,19 @@ namespace CTScanSimulation.Model
             }
         }
     }
+
+    internal static class NativeMethods {
+
+        /// <summary>
+        /// Copies memory fragment.
+        /// </summary>
+        /// <param name="dest">Destination pointer.</param>
+        /// <param name="src">Source pointer.</param>
+        /// <param name="count">Number of bytes to copy.</param>
+        [DllImport("kernel32.dll", EntryPoint = "CopyMemory", SetLastError = false)]
+        public static extern void CopyMemory(IntPtr dest, IntPtr src, int count);
+
+    }
+
+
 }

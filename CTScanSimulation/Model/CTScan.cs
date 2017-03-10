@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
 namespace CTScanSimulation.Model
@@ -32,39 +34,46 @@ namespace CTScanSimulation.Model
         private readonly float emitterDetectorSystemStep;
         private readonly int emitterDetectorSystemWidth;
         private readonly int numberOfDetectors;
-        private readonly Bitmap orginalImage;
+        private readonly Bitmap originalImage;
+        private readonly DirectBitmap directOriginalImage;
         private readonly int radius;
         private readonly long[,] rawData;
         private readonly DirectBitmap sinogram;
         private DirectBitmap recreatedImage;
         private readonly long firstPixelsToSkip;
+        private readonly int originalImageWidth;
+        private readonly int originalImageHeight;
 
-        public CtScan(Bitmap orginalImage, float emitterDetectorSystemStep, int numberOfDetectors, int emitterDetectorSystemWidth)
+        public CtScan(Bitmap originalImage, float emitterDetectorSystemStep, int numberOfDetectors, int emitterDetectorSystemWidth)
         {
-            ConvertToGreyscale(orginalImage);
-            this.orginalImage = orginalImage;
+            ConvertToGreyscale(originalImage);
+            directOriginalImage = new DirectBitmap(originalImage);
+            this.originalImage = originalImage;
+            originalImageWidth = originalImage.Width;
+            originalImageHeight = originalImage.Height;
             this.emitterDetectorSystemStep = emitterDetectorSystemStep;
             this.numberOfDetectors = numberOfDetectors;
             this.emitterDetectorSystemWidth = emitterDetectorSystemWidth;
-            recreatedImage = new DirectBitmap(orginalImage.Width, orginalImage.Height);
+            recreatedImage = new DirectBitmap(originalImage.Width, originalImage.Height);
             detectorStep = (float)emitterDetectorSystemWidth / (numberOfDetectors - 1);
             sinogram = new DirectBitmap(numberOfDetectors, (int)Math.Floor(360 / emitterDetectorSystemStep));
-            rawData = new long[orginalImage.Width, orginalImage.Height];
+            rawData = new long[originalImage.Width, originalImage.Height];
 
-            centerX = orginalImage.Width / 2;
-            centerY = orginalImage.Height / 2;
+            centerX = originalImage.Width / 2;
+            centerY = originalImage.Height / 2;
 
-            radius = orginalImage.Height > orginalImage.Width ? orginalImage.Width : orginalImage.Height;
+            radius = originalImage.Height > originalImage.Width ? originalImage.Width : originalImage.Height;
             radius = radius / 2 - padding;
-            firstPixelsToSkip = (long) (2.5 * orginalImage.Width / emitterDetectorSystemWidth);
+            firstPixelsToSkip = (long) (2.5 * originalImage.Width / emitterDetectorSystemWidth);
 
         }
 
         ~CtScan()
         {
-            orginalImage.Dispose();
+            originalImage.Dispose();
             sinogram.Dispose();
             recreatedImage.Dispose();
+            directOriginalImage.Dispose();
         }
 
         public static long Scale(long originalStart, long originalEnd, // Original range
@@ -75,19 +84,16 @@ namespace CTScanSimulation.Model
             return (long)(newStart + (value - originalStart) * scale);
         }
 
-        public BitmapImage CreateSinogram(int n)
+        public BitmapImage CreateSinogram(int row)
         {
-            CreateSinogramRow(n);
+            CreateSinogramRow(row);
             return sinogram.ToBitmapImage();
         }
 
         public BitmapImage CreateSinogram()
         {
             int steps = (int)Math.Floor(360 / emitterDetectorSystemStep);
-            for (int i = 0; i < steps; i++)
-            {
-                CreateSinogramRow(i);
-            }
+            Parallel.For(0, steps, CreateSinogramRow);
             return sinogram.ToBitmapImage();
         }
 
@@ -99,7 +105,7 @@ namespace CTScanSimulation.Model
             {
                 throw new ArgumentOutOfRangeException(nameof(n), @"angle>360");
             }
-            using (var result = (Bitmap)orginalImage.Clone())
+            using (var result = (Bitmap)originalImage.Clone())
             using (Graphics g = Graphics.FromImage(result))
             using (Pen redPen = new Pen(Color.Red, 2))
             using (Pen bluePen = new Pen(Color.CadetBlue, 2))
@@ -132,17 +138,19 @@ namespace CTScanSimulation.Model
 
         public BitmapImage RecreateImage()
         {
-            for (int row = 0; row < sinogram.Height; row++)
+            Parallel.For(0, sinogram.Height, row =>
             {
-                RestoreImageBySinogramRow(row);
-            }
+                RestoreImageBySinogramRow(row, false);
+            });
+
+            CreateBitmapFromRawData();
 
             return recreatedImage.ToBitmapImage();
         }
 
-        public BitmapImage RecreateImage(int n)
+        public BitmapImage RecreateImage(int row)
         {
-            RestoreImageBySinogramRow(n);
+            RestoreImageBySinogramRow(row);
             return recreatedImage.ToBitmapImage();
         }
 
@@ -249,14 +257,14 @@ namespace CTScanSimulation.Model
         {
             // Create new bitmap
             recreatedImage.Dispose();
-            recreatedImage = new DirectBitmap(orginalImage.Width, orginalImage.Height);
+            recreatedImage = new DirectBitmap(originalImageWidth, originalImageHeight);
 
             // Find the maximum value in the array
             long maxValue = rawData.Cast<long>().Concat(new long[] { 0 }).Max();
 
-            for (int y = 0; y < orginalImage.Height; y++)
+            for (int y = 0; y < originalImageHeight; y++)
             {
-                for (int x = 0; x < orginalImage.Width; x++)
+                for (int x = 0; x < originalImageWidth; x++)
                 {
                     var color = (byte)Scale(0, maxValue, 0, 255, rawData[x, y]);
                     recreatedImage.SetPixel(x, y, Color.FromArgb(color, color, color));
@@ -280,7 +288,7 @@ namespace CTScanSimulation.Model
 
                 IEnumerable<Pixel> pixelsToSum = GetPixelsFromBresenhamLine(emitterX, emitterY, detectorX, detectorY);
                 var toSum = pixelsToSum as IList<Pixel> ?? pixelsToSum.ToList();
-                long sum = toSum.AsParallel().Aggregate(0, (current, pixel) => current + orginalImage.GetPixel(pixel.X, pixel.Y).R);
+                long sum = toSum.AsParallel().Aggregate(0, (current, pixel) => current + directOriginalImage.GetPixel(pixel.X, pixel.Y).R);
                 // Normalization
                 int normalizedSum = (int)(sum / toSum.ToList().Count);
                 if (row < sinogram.Height)
@@ -288,7 +296,7 @@ namespace CTScanSimulation.Model
             }
         }
 
-        private void RestoreImageBySinogramRow(int row)
+        private void RestoreImageBySinogramRow(int row, bool draw = true)
         {
             double angle = row * emitterDetectorSystemStep;
             double radian = angle * 2 * Math.PI / 360;
@@ -314,11 +322,13 @@ namespace CTScanSimulation.Model
                         ++skippedPixels;
                         continue;
                     }
-                    rawData[pixel.X, pixel.Y] += colorToApply.R;
+                    Interlocked.Add(ref rawData[pixel.X, pixel.Y], colorToApply.R);
                 }
             }
-
-            CreateBitmapFromRawData();
+            if (draw)
+            {
+                CreateBitmapFromRawData();
+            }
         }
     }
 }
