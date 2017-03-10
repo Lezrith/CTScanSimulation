@@ -152,7 +152,7 @@ namespace CTScanSimulation.Model
             return BitmapToBitmapImage(recreatedImage);
         }
 
-        private static BitmapImage BitmapToBitmapImage(Image bitmap)
+        public static BitmapImage BitmapToBitmapImage(Image bitmap)
         {
             using (MemoryStream memory = new MemoryStream())
             {

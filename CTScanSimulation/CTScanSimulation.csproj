@@ -70,6 +70,7 @@
     </Compile>
     <Compile Include="Command\RelayCommand.cs" />
     <Compile Include="Model\CTScan.cs" />
+    <Compile Include="Model\DirectBitmap.cs" />
     <Compile Include="ViewModel\MainWindowViewModel.cs" />
     <Compile Include="View\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
