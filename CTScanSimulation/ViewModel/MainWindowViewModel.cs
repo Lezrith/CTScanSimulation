@@ -146,7 +146,7 @@ namespace CTScanSimulation.ViewModel
             CanCreateSiogram = true;
             var orginalImage = new Bitmap(orginalImagePath);
             ctScan = new CtScan(orginalImage, EmitterDetectorSystemStep, NumberOfDetectors, EmitterDetectorSystemWidth);
-            UpdateOrginalImage(null);
+            ImageWithCt = ctScan.DrawCtSystem(0);
         }
 
         private void RecreateImage(object obj)
@@ -165,6 +165,7 @@ namespace CTScanSimulation.ViewModel
         private void UpdateRecreatedImage(object obj)
         {
             if (ctScan == null || recreationLoopStep < 1) return;
+            ImageWithCt = ctScan.DrawCtSystem(recreationLoopStep - 1);
             RecreatedImage = ctScan.RecreateImage(recreationLoopStep - 1);
         }
     }

@@ -72,8 +72,9 @@
                 <TextBox x:Name="recreationLoopStepTextBox" HorizontalAlignment="Right" Height="22" Margin="0,2,0,0" TextWrapping="Wrap" Width="41" IsReadOnly="True" Text="{Binding Value, ElementName=recreationLoopStepSlider, UpdateSourceTrigger=PropertyChanged}" IsEnabled="False" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,5,0,0">
-                <Button x:Name="createSinogramButton" Content="Stwórz sinogram" Margin="0,0,10,0" Command="{Binding CreateSinogramButtonCommand}" IsEnabled="{Binding CanCreateSiogram}" />
-                <Button x:Name="recreateOrginalImageButton" Content="Odtwórz obraz" Margin="10,0,0,0" Command="{Binding RecreateImageButtonCommand}" IsEnabled="{Binding CanRecreateImage}" />
+                <Button x:Name="createSinogramButton" Content="Stwórz sinogram" Margin="0,0,0,0" Command="{Binding CreateSinogramButtonCommand}" IsEnabled="{Binding CanCreateSiogram}" />
+                <Button x:Name="recreateOrginalImageButton" Content="Odtwórz obraz" Margin="20,0,0,0" Command="{Binding RecreateImageButtonCommand}" IsEnabled="{Binding CanRecreateImage}" />
+                <Button x:Name="saveToDICOMButton" Content="Zapisz do DICOM" Margin="20,0,0,0" IsEnabled="false" />
             </StackPanel>
         </StackPanel>
         <Image x:Name="orginalImage" Margin="0" Grid.Row="1" Source="{Binding OrginalImagePath}" />
