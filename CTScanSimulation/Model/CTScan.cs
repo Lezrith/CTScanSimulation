@@ -180,7 +180,7 @@ namespace CTScanSimulation.Model
             bitmap.UnlockBits(locked);
         }
 
-        private static IEnumerable<Pixel> GetPixelsFromBresenhamLine(int x1, int y1, int x2, int y2)
+        private static List<Pixel> GetPixelsFromBresenhamLine(int x1, int y1, int x2, int y2)
         {
             // Zmienne pomocnicze
             List<Pixel> pixels = new List<Pixel>();
@@ -299,11 +299,10 @@ namespace CTScanSimulation.Model
                 int detectorX = (int)(centerX - Math.Cos(detectorRad) * radius);
                 int detectorY = (int)(centerY - Math.Sin(detectorRad) * radius);
 
-                IEnumerable<Pixel> pixelsToSum = GetPixelsFromBresenhamLine(emitterX, emitterY, detectorX, detectorY);
-                var toSum = pixelsToSum as IList<Pixel> ?? pixelsToSum.ToList();
-                long sum = toSum.AsParallel().Aggregate(0, (current, pixel) => current + directOriginalImage.GetPixel(pixel.X, pixel.Y).R);
+                List<Pixel> pixelsToSum = GetPixelsFromBresenhamLine(emitterX, emitterY, detectorX, detectorY);
+                long sum = pixelsToSum.Aggregate(0, (current, pixel) => current + directOriginalImage.GetPixel(pixel.X, pixel.Y).R);
                 // Normalization
-                int normalizedSum = (int)(sum / toSum.ToList().Count);
+                int normalizedSum = (int)(sum / pixelsToSum.Count);
                 if (row < sinogram.Height)
                     sinogram.SetPixel(detectorNo, row, Color.FromArgb(normalizedSum, normalizedSum, normalizedSum));
             }
