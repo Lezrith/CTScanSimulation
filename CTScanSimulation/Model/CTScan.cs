@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -156,14 +157,27 @@ namespace CTScanSimulation.Model
 
         private static void ConvertToGreyscale(Bitmap bitmap)
         {
-            for (int i = 0; i < bitmap.Height; i++)
+            BitmapData locked = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height),
+                                                ImageLockMode.ReadWrite,
+                                                PixelFormat.Format32bppArgb);
+            unsafe
             {
-                for (int j = 0; j < bitmap.Width; j++)
+                byte* pixelPtr = (byte*) (void*) locked.Scan0;
+
+                for (int y = 0; y < bitmap.Height; y++)
                 {
-                    var grey = RgbToGreyscale(bitmap.GetPixel(j, i));
-                    bitmap.SetPixel(j, i, grey);
+                    for (int x = 0; x < bitmap.Width; x++)
+                    {
+                        byte grey = RgbToGreyscale(Color.FromArgb(*pixelPtr, *(pixelPtr + 1), *(pixelPtr + 2)));
+                        *pixelPtr++ = grey;
+                        *pixelPtr++ = grey;
+                        *pixelPtr++ = grey;
+                        *pixelPtr++ = 255;
+                    }
                 }
             }
+
+            bitmap.UnlockBits(locked);
         }
 
         private static IEnumerable<Pixel> GetPixelsFromBresenhamLine(int x1, int y1, int x2, int y2)
@@ -247,10 +261,9 @@ namespace CTScanSimulation.Model
             return pixels;
         }
 
-        private static Color RgbToGreyscale(Color c)
+        private static byte RgbToGreyscale(Color c)
         {
-            int grey = (c.R + c.G + c.B) / 3;
-            return Color.FromArgb(grey, grey, grey);
+            return (byte) ((c.R + c.G + c.B) / 3);
         }
 
         private void CreateBitmapFromRawData()
