@@ -43,13 +43,20 @@ namespace CTScanSimulation.Model
 
         /// <summary>
         /// Reverses the order of bits in <c>int</c>.
-        /// http://stackoverflow.com/questions/32764933/reverse-binary-representation-of-int-only-significant-bits
         /// </summary>
         /// <param name="value"></param>
+        /// <param name="significantBits">How many bits to swap in <c>uint</c>.</param>
         /// <returns></returns>
-        private static int BitReverse(int value)
+        private static long BitReverse(uint value, int significantBits)
         {
-            return Convert.ToInt32(new String(Convert.ToString(value, 2).Reverse().ToArray()), 2);
+            long result = 0;
+            for (int i = 0; i < significantBits / 2; i++)
+            {
+                int bitToSwap = significantBits - i - 1;
+                result |= ((value & (1 << i)) >> i) << bitToSwap;
+                result |= ((value & (1 << bitToSwap)) >> bitToSwap) << i;
+            }
+            return result;
         }
 
         /// <summary>
@@ -62,9 +69,10 @@ namespace CTScanSimulation.Model
         {
             int length = input.Length;
             var result = new Complex[length];
-            for (int i = 0; i < length; i++)
+            int significantBits = (int)(Math.Log(length) / Math.Log(2));
+            for (uint i = 0; i < length; i++)
             {
-                result[BitReverse(i)] = input[i];
+                result[BitReverse(i, significantBits)] = input[i];
             }
             return result;
         }
@@ -102,11 +110,11 @@ namespace CTScanSimulation.Model
             for (int i = 0; i < log; i++)
             {
                 m *= 2;
-                double omegaM = Math.Exp(-2 * Math.PI / m);
-                if (direction == Direction.Inverse) omegaM = -omegaM;
+                Complex index = (direction == Direction.Inverse) ? new Complex(0, -2 * Math.PI / m) : new Complex(0, 2 * Math.PI / m);
+                Complex omegaM = Complex.Exp(index);
                 for (int k = 0; k < length; k += m)
                 {
-                    double omega = 1;
+                    Complex omega = 1;
                     for (int j = 0; j < m / 2; j++)
                     {
                         var t = omega * result[k + j + m / 2];

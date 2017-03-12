@@ -316,6 +316,12 @@ namespace CTScanSimulation.Model
             double radian = angle * 2 * Math.PI / 360;
             int emitterX = (int)(centerX - Math.Cos(radian) * radius);
             int emitterY = (int)(centerY - Math.Sin(radian) * radius);
+            var values = new long[numberOfDetectors];
+            for (int i = 0; i < numberOfDetectors; i++)
+            {
+                values[i] = sinogram.GetPixel(i, row).R;
+            }
+            if (filtering) FilterArray(values);
 
             for (int detector = 0; detector < numberOfDetectors; detector++)
             {
@@ -324,7 +330,7 @@ namespace CTScanSimulation.Model
                 int detectorX = (int)(centerX - Math.Cos(detectorRad) * radius);
                 int detectorY = (int)(centerY - Math.Sin(detectorRad) * radius);
 
-                Color colorToApply = sinogram.GetPixel(detector, row);
+                //Color colorToApply = sinogram.GetPixel(detector, row);
                 IEnumerable<Pixel> pixels = GetPixelsFromBresenhamLine(emitterX, emitterY, detectorX, detectorY);
 
                 long skippedPixels = 0;
@@ -336,7 +342,7 @@ namespace CTScanSimulation.Model
                         ++skippedPixels;
                         continue;
                     }
-                    Interlocked.Add(ref rawData[pixel.X, pixel.Y], colorToApply.R);
+                    Interlocked.Add(ref rawData[pixel.X, pixel.Y], values[detector]);
                 }
             }
             if (draw)
@@ -354,6 +360,7 @@ namespace CTScanSimulation.Model
                 complex[i] = data[i];
             }
             var frequencySpectrum = FFT.Forward(complex);
+            var xd = FFT.Inverse(frequencySpectrum);
             var kernel = CreateKernel(length);
             for (int i = 0; i < length; i++)
             {
