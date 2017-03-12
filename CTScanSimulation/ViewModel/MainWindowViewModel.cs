@@ -144,8 +144,8 @@ namespace CTScanSimulation.ViewModel
             RecreationLoopStep = 0;
             OrginalImagePath = openPicker.FileName;
             CanCreateSiogram = true;
-            var originalImage= new Bitmap(orginalImagePath);
-            ctScan = new CtScan(originalImage, EmitterDetectorSystemStep, NumberOfDetectors, EmitterDetectorSystemWidth);
+            var originalImage = new Bitmap(orginalImagePath);
+            ctScan = new CtScan(originalImage, EmitterDetectorSystemStep, NumberOfDetectors, EmitterDetectorSystemWidth, Filtering);
             ImageWithCt = ctScan.DrawCtSystem(0);
         }
 

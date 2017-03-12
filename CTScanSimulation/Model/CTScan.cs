@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
+using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
@@ -44,8 +45,9 @@ namespace CTScanSimulation.Model
         private readonly long firstPixelsToSkip;
         private readonly int originalImageWidth;
         private readonly int originalImageHeight;
+        private readonly bool filtering;
 
-        public CtScan(Bitmap originalImage, float emitterDetectorSystemStep, int numberOfDetectors, int emitterDetectorSystemWidth)
+        public CtScan(Bitmap originalImage, float emitterDetectorSystemStep, int numberOfDetectors, int emitterDetectorSystemWidth, bool filtering)
         {
             ConvertToGreyscale(originalImage);
             directOriginalImage = new DirectBitmap(originalImage);
@@ -59,14 +61,14 @@ namespace CTScanSimulation.Model
             detectorStep = (float)emitterDetectorSystemWidth / (numberOfDetectors - 1);
             sinogram = new DirectBitmap(numberOfDetectors, (int)Math.Floor(360 / emitterDetectorSystemStep));
             rawData = new long[originalImage.Width, originalImage.Height];
+            this.filtering = filtering;
 
             centerX = originalImage.Width / 2;
             centerY = originalImage.Height / 2;
 
             radius = originalImage.Height > originalImage.Width ? originalImage.Width : originalImage.Height;
             radius = radius / 2 - padding;
-            firstPixelsToSkip = (long) (2.5 * originalImage.Width / emitterDetectorSystemWidth);
-
+            firstPixelsToSkip = (long)(2.5 * originalImage.Width / emitterDetectorSystemWidth);
         }
 
         ~CtScan()
@@ -162,7 +164,7 @@ namespace CTScanSimulation.Model
                                                 PixelFormat.Format32bppArgb);
             unsafe
             {
-                byte* pixelPtr = (byte*) (void*) locked.Scan0;
+                byte* pixelPtr = (byte*)(void*)locked.Scan0;
 
                 for (int y = 0; y < bitmap.Height; y++)
                 {
@@ -263,7 +265,7 @@ namespace CTScanSimulation.Model
 
         private static byte RgbToGreyscale(Color c)
         {
-            return (byte) ((c.R + c.G + c.B) / 3);
+            return (byte)((c.R + c.G + c.B) / 3);
         }
 
         private void CreateBitmapFromRawData()
@@ -341,6 +343,41 @@ namespace CTScanSimulation.Model
             {
                 CreateBitmapFromRawData();
             }
+        }
+
+        private void FilterArray(long[] data)
+        {
+            int length = data.Length;
+            var complex = new Complex[length];
+            for (int i = 0; i < length; i++)
+            {
+                complex[i] = data[i];
+            }
+            var frequencySpectrum = FFT.Forward(complex);
+            var kernel = CreateKernel(length);
+            for (int i = 0; i < length; i++)
+            {
+                frequencySpectrum[i] *= kernel[i];
+            }
+            complex = FFT.Inverse(frequencySpectrum);
+            for (int i = 0; i < numberOfDetectors; i++)
+            {
+                data[i] = (int)complex[i].Real;
+            }
+        }
+
+        private double[] CreateKernel(int width)
+        {
+            int middle = width / 2;
+            var kernel = new double[width];
+            for (int i = 0; i < width; i++)
+            {
+                int distanceFromMiddle = Math.Abs(i - middle);
+                if (distanceFromMiddle == 0) kernel[i] = 1;
+                else if (distanceFromMiddle % 2 == 0) kernel[i] = 0;
+                else kernel[i] = -4 / (Math.PI * Math.PI * distanceFromMiddle * distanceFromMiddle);
+            }
+            return kernel;
         }
     }
 }
