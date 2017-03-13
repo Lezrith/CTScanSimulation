@@ -46,6 +46,7 @@ namespace CTScanSimulation.Model
         private readonly int originalImageWidth;
         private readonly int originalImageHeight;
         private readonly bool filtering;
+        private readonly long[,] pixelReferenceMatrix;
 
         public CtScan(Bitmap originalImage, float emitterDetectorSystemStep, int numberOfDetectors, int emitterDetectorSystemWidth, bool filtering)
         {
@@ -61,6 +62,7 @@ namespace CTScanSimulation.Model
             detectorStep = (float)emitterDetectorSystemWidth / (numberOfDetectors - 1);
             sinogram = new DirectBitmap(numberOfDetectors, (int)Math.Floor(360 / emitterDetectorSystemStep));
             rawData = new long[originalImage.Width, originalImage.Height];
+            this.pixelReferenceMatrix = new long[originalImage.Width, originalImage.Height];
             this.filtering = filtering;
 
             centerX = originalImage.Width / 2;
@@ -282,6 +284,11 @@ namespace CTScanSimulation.Model
                 for (int x = 0; x < originalImageWidth; x++)
                 {
                     var color = (byte)Scale(0, maxValue, 0, 255, rawData[x, y]);
+                    //Byte color = 0;
+                    //if (pixelReferenceMatrix[x, y] != 0)
+                    //{
+                    //    color = (byte)(rawData[x, y] / (float)pixelReferenceMatrix[x, y]);
+                    //}
                     recreatedImage.SetPixel(x, y, Color.FromArgb(color, color, color));
                 }
             }
@@ -304,7 +311,8 @@ namespace CTScanSimulation.Model
                 List<Pixel> pixelsToSum = GetPixelsFromBresenhamLine(emitterX, emitterY, detectorX, detectorY);
                 long sum = pixelsToSum.Aggregate(0, (current, pixel) => current + directOriginalImage.GetPixel(pixel.X, pixel.Y).R);
                 // Normalization
-                int normalizedSum = (int)(sum / pixelsToSum.Count);
+                //int normalizedSum = (int)(sum / pixelsToSum.Count);
+                int normalizedSum = (int)(sum / (2 * radius));
                 if (row < sinogram.Height)
                     sinogram.SetPixel(detectorNo, row, Color.FromArgb(normalizedSum, normalizedSum, normalizedSum));
             }
@@ -342,6 +350,7 @@ namespace CTScanSimulation.Model
                         ++skippedPixels;
                         continue;
                     }
+                    Interlocked.Add(ref pixelReferenceMatrix[pixel.X, pixel.Y], 1);
                     Interlocked.Add(ref rawData[pixel.X, pixel.Y], values[detector]);
                 }
             }
