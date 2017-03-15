@@ -319,9 +319,13 @@ namespace CTScanSimulation.Model
             var values = new long[numberOfDetectors];
             for (int i = 0; i < numberOfDetectors; i++)
             {
-                values[i] = sinogram.GetPixel(i, row).R;
+                values[i] = (long)Math.Pow(sinogram.GetPixel(i, row).R, 1.5);
             }
-            if (filtering) FilterArray(values);
+            if (filtering)
+            {
+                var kernel = CreateKernel(numberOfDetectors);
+                values = ApplyKernel(values, kernel);
+            }
 
             for (int detector = 0; detector < numberOfDetectors; detector++)
             {
@@ -351,30 +355,26 @@ namespace CTScanSimulation.Model
             }
         }
 
-        private void FilterArray(long[] data)
+        private static long[] ApplyKernel(long[] data, double[] kernel)
         {
             int length = data.Length;
-            var complex = new Complex[length];
+            int middle = kernel.Length / 2;
+            var result = new long[length];
             for (int i = 0; i < length; i++)
             {
-                complex[i] = data[i];
+                int start = middle < i ? 0 : middle - i;
+                int end = i + middle < length ? kernel.Length : length - i + 1;
+                for (int j = start; j < end; j++)
+                {
+                    result[i] += (long)(data[i + j - middle] * kernel[j]);
+                }
             }
-            var frequencySpectrum = FFT.Forward(complex);
-            var xd = FFT.Inverse(frequencySpectrum);
-            var kernel = CreateKernel(length);
-            for (int i = 0; i < length; i++)
-            {
-                frequencySpectrum[i] *= kernel[i];
-            }
-            complex = FFT.Inverse(frequencySpectrum);
-            for (int i = 0; i < numberOfDetectors; i++)
-            {
-                data[i] = (int)complex[i].Real;
-            }
+            return result;
         }
 
-        private double[] CreateKernel(int width)
+        private static double[] CreateKernel(int width)
         {
+            if (width % 2 == 0) width++;
             int middle = width / 2;
             var kernel = new double[width];
             for (int i = 0; i < width; i++)

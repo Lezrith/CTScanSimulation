@@ -36,7 +36,7 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
                 <Label x:Name="emitterDetectorSystemWidthLabel" Content="Rozwartość układu:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="112" />
-                <Slider x:Name="emitterDetectorSystemWidthSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="340" IsSnapToTickEnabled="True" Maximum="90" Minimum="10" TickPlacement="BottomRight" Value="{Binding EmitterDetectorSystemWidth}" />
+                <Slider x:Name="emitterDetectorSystemWidthSlider" HorizontalAlignment="Left" Margin="0,2,0,0" VerticalAlignment="Top" Width="340" IsSnapToTickEnabled="True" Maximum="180" Minimum="10" TickPlacement="BottomRight" Value="{Binding EmitterDetectorSystemWidth}" />
                 <TextBox x:Name="emitterDetectorSystemWidthTextBox" HorizontalAlignment="Right" Height="22" Margin="0,2,0,0" TextWrapping="Wrap" Width="30" IsReadOnly="True" Text="{Binding Value, ElementName=emitterDetectorSystemWidthSlider, UpdateSourceTrigger=PropertyChanged}" IsEnabled="False" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
