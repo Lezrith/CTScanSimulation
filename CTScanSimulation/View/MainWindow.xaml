@@ -42,6 +42,8 @@
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
                 <Label x:Name="filteringLabel" Content="Filtrowanie:" HorizontalAlignment="Left" />
                 <CheckBox x:Name="filteringCheckBox" HorizontalAlignment="Left" IsChecked="{Binding Filtering}" Margin="0,8,0,0" />
+                <Label x:Name="meanSquaredErrorLabel" Content="Błąd średniokwadratowy:" HorizontalAlignment="Left" Margin="171,0,0,0" />
+                <TextBox x:Name="meanSquaredErrorTextBox" Height="22" TextWrapping="Wrap" Text="{Binding MeanSquaredError}" Width="86" IsReadOnly="True" />
             </StackPanel>
         </StackPanel>
         <StackPanel Margin="10,10,10,0" Orientation="Vertical" VerticalAlignment="Top" Grid.Column="1">

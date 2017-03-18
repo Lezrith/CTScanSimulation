@@ -16,6 +16,7 @@ namespace CTScanSimulation.ViewModel
         private bool canRecreateImage;
         private CtScan ctScan;
         private BitmapImage imageWithCt;
+        private double meanSquaredError;
         private string orginalImagePath;
         private BitmapImage recreatedImage;
         private int recreationLoopStep;
@@ -64,6 +65,12 @@ namespace CTScanSimulation.ViewModel
         {
             get { return imageWithCt; }
             set { imageWithCt = value; OnPropertyChanged(nameof(ImageWithCt)); }
+        }
+
+        public double MeanSquaredError
+        {
+            get { return meanSquaredError; }
+            set { meanSquaredError = value; OnPropertyChanged(nameof(MeanSquaredError)); }
         }
 
         public int NumberOfDetectors { get; set; }
@@ -152,6 +159,7 @@ namespace CTScanSimulation.ViewModel
         private void RecreateImage(object obj)
         {
             RecreatedImage = ctScan.RecreateImage();
+            MeanSquaredError = ctScan.CalculateMeanSquaredError();
         }
 
         private void UpdateOrginalImage(object obj)

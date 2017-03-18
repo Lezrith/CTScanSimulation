@@ -386,5 +386,21 @@ namespace CTScanSimulation.Model
             }
             return kernel;
         }
+
+        public double CalculateMeanSquaredError()
+        {
+            double sum = 0;
+            int numberOfPixels = originalImageHeight * originalImageWidth;
+            for (int y = 0; y < originalImageHeight; y++)
+            {
+                for (int x = 0; x < originalImageWidth; x++)
+                {
+                    var orginalColor = originalImage.GetPixel(x, y);
+                    var recreatedColor = recreatedImage.GetPixel(x, y);
+                    sum += (orginalColor.R - recreatedColor.R) * (orginalColor.R - recreatedColor.R);
+                }
+            }
+            return sum / numberOfPixels;
+        }
     }
 }
