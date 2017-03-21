@@ -1,5 +1,6 @@
 ﻿using CTScanSimulation.Command;
 using CTScanSimulation.Model;
+using CTScanSimulation.View;
 using Microsoft.Win32;
 using System.ComponentModel;
 using System.Drawing;
@@ -30,6 +31,7 @@ namespace CTScanSimulation.ViewModel
             RecreateImageButtonCommand = new RelayCommand(RecreateImage);
             UpdateOrginalImageCommand = new RelayCommand(UpdateOrginalImage);
             UpdateRecreatedImageCommand = new RelayCommand(UpdateRecreatedImage);
+            OpenSavingDialogButtonCommand = new RelayCommand(OpenSavingDialog);
 
             EmitterDetectorSystemStep = 0.1f;
             SinogramLoopStep = 0;
@@ -60,6 +62,13 @@ namespace CTScanSimulation.ViewModel
         public int EmitterDetectorSystemWidth { get; set; }
         public ICommand FilePickerButtonCommand { get; set; }
         public bool Filtering { get; set; }
+        private bool canOpenSavingDialog;
+
+        public bool CanOpenSavingDialog
+        {
+            get { return canOpenSavingDialog; }
+            set { canOpenSavingDialog = value; OnPropertyChanged(nameof(CanOpenSavingDialog)); }
+        }
 
         public BitmapImage ImageWithCt
         {
@@ -110,6 +119,7 @@ namespace CTScanSimulation.ViewModel
         public ICommand UpdateOrginalImageCommand { get; set; }
 
         public ICommand UpdateRecreatedImageCommand { get; set; }
+        public ICommand OpenSavingDialogButtonCommand { get; set; }
 
         protected void OnPropertyChanged(string name)
         {
@@ -150,6 +160,8 @@ namespace CTScanSimulation.ViewModel
             SinogramLoopStep = 0;
             RecreationLoopStep = 0;
             OrginalImagePath = openPicker.FileName;
+            CanRecreateImage = false;
+            CanOpenSavingDialog = false;
             CanCreateSiogram = true;
             var originalImage = new Bitmap(orginalImagePath);
             ctScan = new CtScan(originalImage, EmitterDetectorSystemStep, NumberOfDetectors, EmitterDetectorSystemWidth, Filtering);
@@ -160,6 +172,7 @@ namespace CTScanSimulation.ViewModel
         {
             RecreatedImage = ctScan.RecreateImage();
             MeanSquaredError = ctScan.CalculateMeanSquaredError();
+            CanOpenSavingDialog = true;
         }
 
         private void UpdateOrginalImage(object obj)
@@ -175,6 +188,13 @@ namespace CTScanSimulation.ViewModel
             if (ctScan == null || recreationLoopStep < 1) return;
             ImageWithCt = ctScan.DrawCtSystem(recreationLoopStep - 1);
             RecreatedImage = ctScan.RecreateImage(recreationLoopStep - 1);
+        }
+
+        private void OpenSavingDialog(object obj)
+        {
+            var dICOMSaveWindow = new DICOMSaveWindow();
+            dICOMSaveWindow.mainGrid.DataContext = new DICOMSaveViewModel(recreatedImage);
+            dICOMSaveWindow.ShowDialog();
         }
     }
 }

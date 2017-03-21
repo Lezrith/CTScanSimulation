@@ -1,0 +1,33 @@
+﻿<Window x:Class="CTScanSimulation.View.DICOMSaveWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CTScanSimulation.View"
+        xmlns:ViewModel="clr-namespace:CTScanSimulation.ViewModel"
+        mc:Ignorable="d"
+        Title="DICOMSaveWindow" Height="350" Width="800">
+    <Grid x:Name="mainGrid">
+        <StackPanel VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+            <DockPanel HorizontalAlignment="Stretch" Margin="0 3">
+                <Label x:Name="patientNameLabel" Content="Imię i nazwisko:" />
+                <TextBox x:Name="patientNameTextBox" Text="{Binding PatientName, Mode=OneWayToSource}"  HorizontalAlignment="Stretch" />
+            </DockPanel>
+            <DockPanel HorizontalAlignment="Stretch" Margin="0 3">
+                <Label x:Name="patientSexLabel" Content="Płeć:" />
+                <ComboBox x:Name="patientSex" SelectedValue="{Binding PatientSex}" ItemsSource="{Binding Sexes, Mode=OneWay}" HorizontalAlignment="Stretch" Margin="59,0,0,0" />
+            </DockPanel>
+            <DockPanel HorizontalAlignment="Stretch" Margin="0 3">
+                <Label x:Name="patientDateOfBirthLabel" Content="Data urodzenia:" />
+                <DatePicker x:Name="patientDateOfBirthDatePicker" HorizontalAlignment="Stretch" SelectedDate="{Binding PatientDateOfBirth}" FirstDayOfWeek="Monday" />
+            </DockPanel>
+            <DockPanel HorizontalAlignment="Stretch" Margin="0 3">
+                <Label x:Name="Label" Content="Data badania:" />
+                <DatePicker x:Name="examinationDateDatePicker" HorizontalAlignment="Stretch" SelectedDate="{Binding ExaminationDate}" FirstDayOfWeek="Monday" Margin="10,0,0,0" />
+            </DockPanel>
+            <Label x:Name="commentLabel" Content="Komentarz (max 500 znaków): " />
+            <TextBox x:Name="commentTextBlock" Text="{Binding Comment}" HorizontalAlignment="Stretch" Height="100" Margin="95,0,0,0" MaxLines="5" TextWrapping="Wrap" AcceptsReturn="True" MaxLength="500" />
+            <Button x:Name="SaveButton" Content="Zapisz" HorizontalAlignment="Center" Margin="0,25,0,0" Command="{Binding SaveButtonCommand}" />
+        </StackPanel>
+    </Grid>
+</Window>

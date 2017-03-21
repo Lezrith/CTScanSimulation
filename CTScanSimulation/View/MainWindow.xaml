@@ -76,7 +76,7 @@
             <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,5,0,0">
                 <Button x:Name="createSinogramButton" Content="Stwórz sinogram" Margin="0,0,0,0" Command="{Binding CreateSinogramButtonCommand}" IsEnabled="{Binding CanCreateSiogram}" />
                 <Button x:Name="recreateOrginalImageButton" Content="Odtwórz obraz" Margin="20,0,0,0" Command="{Binding RecreateImageButtonCommand}" IsEnabled="{Binding CanRecreateImage}" />
-                <Button x:Name="saveToDICOMButton" Content="Zapisz do DICOM" Margin="20,0,0,0" IsEnabled="false" />
+                <Button x:Name="openSavingDialogButton" Content="Zapisz do DICOM" Margin="20,0,0,0" Command="{Binding OpenSavingDialogButtonCommand}" IsEnabled="{Binding CanSaveToDICOM}" />
             </StackPanel>
         </StackPanel>
         <Image x:Name="orginalImage" Margin="0" Grid.Row="1" Source="{Binding OrginalImagePath}" />
