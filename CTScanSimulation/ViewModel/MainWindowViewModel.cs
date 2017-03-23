@@ -14,6 +14,7 @@ namespace CTScanSimulation.ViewModel
     public class MainWindowViewModel : INotifyPropertyChanged
     {
         private bool canCreateSinogram;
+        private bool canOpenSavingDialog;
         private bool canRecreateImage;
         private CtScan ctScan;
         private BitmapImage imageWithCt;
@@ -41,6 +42,7 @@ namespace CTScanSimulation.ViewModel
 
             CanCreateSiogram = false;
             CanRecreateImage = false;
+            CanOpenSavingDialog = false;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -49,6 +51,12 @@ namespace CTScanSimulation.ViewModel
         {
             get { return canCreateSinogram; }
             set { canCreateSinogram = value; OnPropertyChanged(nameof(CanCreateSiogram)); }
+        }
+
+        public bool CanOpenSavingDialog
+        {
+            get { return canOpenSavingDialog; }
+            set { canOpenSavingDialog = value; OnPropertyChanged(nameof(CanOpenSavingDialog)); }
         }
 
         public bool CanRecreateImage
@@ -62,13 +70,6 @@ namespace CTScanSimulation.ViewModel
         public int EmitterDetectorSystemWidth { get; set; }
         public ICommand FilePickerButtonCommand { get; set; }
         public bool Filtering { get; set; }
-        private bool canOpenSavingDialog;
-
-        public bool CanOpenSavingDialog
-        {
-            get { return canOpenSavingDialog; }
-            set { canOpenSavingDialog = value; OnPropertyChanged(nameof(CanOpenSavingDialog)); }
-        }
 
         public BitmapImage ImageWithCt
         {
@@ -83,6 +84,8 @@ namespace CTScanSimulation.ViewModel
         }
 
         public int NumberOfDetectors { get; set; }
+
+        public ICommand OpenSavingDialogButtonCommand { get; set; }
 
         public string OrginalImagePath
         {
@@ -119,7 +122,6 @@ namespace CTScanSimulation.ViewModel
         public ICommand UpdateOrginalImageCommand { get; set; }
 
         public ICommand UpdateRecreatedImageCommand { get; set; }
-        public ICommand OpenSavingDialogButtonCommand { get; set; }
 
         protected void OnPropertyChanged(string name)
         {
@@ -138,6 +140,13 @@ namespace CTScanSimulation.ViewModel
             {
                 MessageBox.Show(ex.Message, "Błąd", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
+        }
+
+        private void OpenSavingDialog(object obj)
+        {
+            var dICOMSaveWindow = new DICOMSaveWindow();
+            dICOMSaveWindow.mainGrid.DataContext = new DICOMSaveViewModel(recreatedImage);
+            dICOMSaveWindow.ShowDialog();
         }
 
         private void PickFile(object obj)
@@ -188,13 +197,6 @@ namespace CTScanSimulation.ViewModel
             if (ctScan == null || recreationLoopStep < 1) return;
             ImageWithCt = ctScan.DrawCtSystem(recreationLoopStep - 1);
             RecreatedImage = ctScan.RecreateImage(recreationLoopStep - 1);
-        }
-
-        private void OpenSavingDialog(object obj)
-        {
-            var dICOMSaveWindow = new DICOMSaveWindow();
-            dICOMSaveWindow.mainGrid.DataContext = new DICOMSaveViewModel(recreatedImage);
-            dICOMSaveWindow.ShowDialog();
         }
     }
 }
